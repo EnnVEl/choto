@@ -23,9 +23,9 @@
     flex-shrink: 0;
   }
   .tab {
-    padding: 14px 24px;
+    padding: 14px 28px;
     cursor: pointer;
-    font-size: 14.5px;
+    font-size: 15px;
     font-weight: 600;
     color: #7f849c;
     border-bottom: 3px solid transparent;
@@ -43,7 +43,6 @@
   .pane { position: absolute; inset: 0; display: none; }
   .pane.active { display: flex; }
 
-  /* ===== ДЕРЕВО ===== */
   #tree-pane { flex-direction: row; }
 
   #tree-canvas {
@@ -105,16 +104,8 @@
     color: #a6adc8;
     line-height: 1.35;
     word-wrap: break-word;
-    max-height: 66px;
+    max-height: 60px;
     overflow: hidden;
-    position: relative;
-  }
-  .node-desc::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 16px;
-    background: linear-gradient(transparent, #313244);
   }
   .node-badge {
     display: inline-block;
@@ -273,7 +264,6 @@
     margin: 10px 0 6px;
   }
 
-  /* ===== ТЕКСТ СЮЖЕТА ===== */
   #story-pane {
     flex-direction: column;
     overflow: hidden;
@@ -332,144 +322,161 @@
     color: #1e1e2e;
   }
 
-  /* ===== ОПИСАНИЯ УЗЛОВ ===== */
-  #descs-pane {
+  /* ===== НОВАЯ ВКЛАДКА: ОПИСАНИЯ УЗЛОВ ===== */
+  #desc-pane {
     flex-direction: row;
     overflow: hidden;
   }
-
-  #descs-list {
-    width: 320px;
+  .desc-sidebar {
+    width: 280px;
     background: #181825;
     border-right: 2px solid #313244;
     overflow-y: auto;
     flex-shrink: 0;
-    padding: 12px;
+    padding: 12px 0;
   }
-  .desc-list-item {
-    display: block;
-    width: 100%;
-    padding: 12px 14px;
+  .desc-sidebar-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #7f849c;
+    padding: 8px 16px;
+    border-bottom: 1px solid #313244;
     margin-bottom: 8px;
-    border-radius: 8px;
-    background: #313244;
-    border: 2px solid transparent;
-    cursor: pointer;
-    text-align: left;
-    color: #cdd6f4;
-    transition: all 0.15s;
-    font-family: inherit;
   }
-  .desc-list-item:hover { border-color: #45475a; }
-  .desc-list-item.active { border-color: #f9e2af; background: #3a3d55; }
-  .desc-list-item .dli-badge {
-    display: inline-block;
+  .desc-node-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .desc-node-item:hover { background: #1e1e2e; }
+  .desc-node-item.active {
+    background: #313244;
+    border-left-color: #89b4fa;
+  }
+  .desc-node-item .dn-title {
+    font-weight: 600;
+    color: #f5e0dc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .desc-node-item .dn-preview {
+    font-size: 11px;
+    color: #6c7086;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .desc-node-item .dn-type {
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-bottom: 6px;
     font-weight: 700;
+    align-self: flex-start;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-top: 2px;
   }
-  .desc-list-item .dli-title {
-    font-weight: 700;
-    font-size: 13.5px;
-    color: #f5e0dc;
-    margin-bottom: 3px;
-    word-wrap: break-word;
-  }
-  .desc-list-item .dli-preview {
-    font-size: 11px;
-    color: #7f849c;
-    line-height: 1.35;
-    max-height: 30px;
-    overflow: hidden;
-  }
-  .desc-list-item .dli-preview.empty { font-style: italic; }
-  .desc-list-item .dli-count {
-    font-size: 10px;
+  .desc-sidebar-empty {
+    padding: 20px 16px;
+    font-size: 12px;
     color: #6c7086;
-    margin-top: 5px;
+    text-align: center;
+    font-style: italic;
   }
 
-  #descs-editor-wrap {
+  .desc-main {
     flex: 1;
-    overflow-y: auto;
-    padding: 30px;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    flex-direction: column;
+    overflow: hidden;
   }
-  .descs-editor-card {
-    width: 100%;
-    max-width: 800px;
-    background: #313244;
-    border-radius: 12px;
-    padding: 26px 30px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  }
-  .descs-editor-header {
+  .desc-main-header {
+    padding: 16px 24px;
+    background: #181825;
+    border-bottom: 2px solid #313244;
     display: flex;
+    gap: 12px;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
+    flex-shrink: 0;
   }
-  .descs-editor-header .descs-title {
-    font-size: 20px;
+  .desc-main-header .dmh-title {
+    font-size: 17px;
     font-weight: 700;
     color: #f5e0dc;
     flex: 1;
   }
-  .descs-editor-meta {
-    font-size: 12px;
-    color: #7f849c;
-    margin-bottom: 18px;
-  }
-  .descs-editor-card label {
-    display: block;
-    font-size: 11.5px;
-    color: #7f849c;
-    margin-bottom: 6px;
+  .desc-main-header .dmh-type {
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
   }
-  #descs-textarea {
+  .desc-main-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .desc-main-body textarea {
     width: 100%;
-    min-height: 360px;
-    padding: 16px 18px;
+    min-height: 400px;
+    background: #313244;
     border: 2px solid #45475a;
     border-radius: 10px;
-    background: #1e1e2e;
+    padding: 18px 20px;
     color: #cdd6f4;
     font-size: 15px;
     line-height: 1.7;
     font-family: 'Segoe UI', Georgia, serif;
     outline: none;
     resize: vertical;
-    transition: border-color 0.15s;
   }
-  #descs-textarea:focus { border-color: #89b4fa; }
-  .descs-editor-footer {
+  .desc-main-body textarea:focus { border-color: #89b4fa; }
+  .desc-main-empty {
+    flex: 1;
     display: flex;
-    gap: 10px;
-    margin-top: 14px;
     align-items: center;
-  }
-  .descs-editor-footer .btn { width: auto; margin: 0; padding: 9px 16px; }
-  .descs-editor-footer .spacer { flex: 1; }
-  .descs-char-count {
-    font-size: 12px;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
     color: #6c7086;
-  }
-  .descs-empty {
-    text-align: center;
-    color: #6c7086;
-    padding: 80px 20px;
     font-size: 15px;
-    line-height: 1.7;
+    text-align: center;
+    padding: 40px;
   }
-  .descs-empty .btn { width: auto; margin: 16px auto 0; padding: 10px 20px; }
+  .desc-counter {
+    font-size: 11px;
+    color: #7f849c;
+    margin-top: 8px;
+    text-align: right;
+  }
+  .desc-preview-box {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #1e1e2e;
+    border: 1px dashed #45475a;
+    border-radius: 8px;
+  }
+  .desc-preview-box .dpb-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #7f849c;
+    margin-bottom: 6px;
+  }
+  .desc-preview-box .dpb-text {
+    font-size: 12px;
+    color: #a6adc8;
+    font-style: italic;
+  }
 
   .modal-overlay {
     position: fixed;
@@ -539,7 +546,7 @@
 <div class="tabs">
   <div class="tab active" data-pane="tree">🌳 Дерево сюжета</div>
   <div class="tab" data-pane="story">📖 Текст сюжета</div>
-  <div class="tab" data-pane="descs">📄 Описания узлов</div>
+  <div class="tab" data-pane="desc">📝 Описания узлов</div>
 </div>
 
 <div class="content">
@@ -572,12 +579,9 @@
           </select>
         </div>
         <div class="field">
-          <label>Краткое описание (в дереве)</label>
+          <label>Описание (кратко для дерева)</label>
           <textarea id="edit-desc"></textarea>
         </div>
-        <p class="hint" style="margin-top:-6px;margin-bottom:10px;">
-          Полное описание — на вкладке «📄 Описания узлов».
-        </p>
 
         <div class="link-section-title">Входящие связи (откуда)</div>
         <ul class="link-list" id="incoming-list"></ul>
@@ -587,7 +591,7 @@
 
         <button class="btn warning" id="btn-connect">🔗 Добавить связь к…</button>
         <button class="btn danger" id="btn-delete">🗑 Удалить узел полностью</button>
-        <p class="hint">Тяните узел мышью, чтобы переместить. Тяните от правой точки узла к другому узлу, чтобы создать связь. Крестик у связи — отвязать.</p>
+        <p class="hint">Тяните узел мышью, чтобы переместить. Тяните от правой точки узла к другому узлу, чтобы создать связь. Крестик у связи — отвязать. На вкладке «📝 Описания узлов» можно писать полный текст описания.</p>
       </div>
 
       <h3>Действия</h3>
@@ -614,29 +618,26 @@
   </div>
 
   <!-- ===== ОПИСАНИЯ УЗЛОВ ===== -->
-  <div class="pane" id="descs-pane">
-    <div id="descs-list"></div>
-    <div id="descs-editor-wrap">
-      <div class="descs-editor-card" id="descs-editor-card" style="display:none;">
-        <div class="descs-editor-header">
-          <div class="descs-title" id="descs-title">Узел</div>
-        </div>
-        <div class="descs-editor-meta" id="descs-meta"></div>
-        <label for="descs-textarea">Полное описание</label>
-        <textarea id="descs-textarea"
-          placeholder="Пишите здесь полное описание узла. В дереве будет виден только краткий фрагмент (первые ~120 символов)."></textarea>
-        <div class="descs-editor-footer">
-          <span class="descs-char-count" id="descs-char-count">0 символов</span>
-          <div class="spacer"></div>
-          <button class="btn" id="descs-clear-btn">Очистить описание</button>
-          <button class="btn success" id="descs-save-btn">💾 Сохранить</button>
-        </div>
-        <p class="hint">Автосохранение работает при вводе. Кнопка «Сохранить» просто фиксирует текущее состояние.</p>
+  <div class="pane" id="desc-pane">
+    <div class="desc-sidebar">
+      <div class="desc-sidebar-title">Узлы дерева</div>
+      <div id="desc-node-list"></div>
+    </div>
+    <div class="desc-main">
+      <div class="desc-main-header" id="desc-header" style="display:none;">
+        <div class="dmh-title" id="desc-header-title"></div>
+        <span class="dmh-type" id="desc-header-type"></span>
       </div>
-      <div class="descs-empty" id="descs-empty">
-        Нет узлов для описания.<br>
-        Сначала создайте узлы на вкладке «🌳 Дерево сюжета».<br>
-        <button class="btn primary" id="descs-goto-tree">Перейти к дереву</button>
+      <div class="desc-main-body" id="desc-body" style="display:none;">
+        <textarea id="desc-full-text" placeholder="Полное описание этого узла..."></textarea>
+        <div class="desc-counter" id="desc-counter">0 символов</div>
+        <div class="desc-preview-box">
+          <div class="dpb-label">Как это выглядит на карточке в дереве (до 20 символов, слова целиком):</div>
+          <div class="dpb-text" id="desc-preview">—</div>
+        </div>
+      </div>
+      <div class="desc-main-empty" id="desc-empty">
+        <div>👈 Выберите узел слева, чтобы редактировать его полное описание</div>
       </div>
     </div>
   </div>
@@ -666,7 +667,7 @@
       </select>
     </div>
     <div class="field">
-      <label>Краткое описание (в дереве)</label>
+      <label>Описание (кратко для дерева)</label>
       <textarea id="modal-input-desc"></textarea>
     </div>
     <div class="modal-actions">
@@ -714,12 +715,8 @@
       </select>
     </div>
     <div class="field">
-      <label>Краткое описание (в дереве)</label>
+      <label>Описание (из выделения)</label>
       <textarea id="mn-desc"></textarea>
-    </div>
-    <div class="field">
-      <label>Полное описание (можно дополнить)</label>
-      <textarea id="mn-fulldesc" placeholder="Полный текст, сохранится в описании узла"></textarea>
     </div>
     <div class="field">
       <label>Привязать к существующему узлу (необязательно)</label>
@@ -737,7 +734,7 @@
 <div class="modal-overlay" id="link-to-node-modal">
   <div class="modal">
     <h3>Привязать выделенный текст к узлу</h3>
-    <p class="hint" style="margin-bottom:12px;">Выделение станет дополнением к описанию выбранного узла.</p>
+    <p class="hint" style="margin-bottom:12px;">Выделение станет дополнением к краткому описанию узла.</p>
     <div class="field">
       <label>Узел</label>
       <select id="ltn-select" size="8" style="height:auto;"></select>
@@ -752,12 +749,10 @@
 <script>
 /* ============================================================
    МОДЕЛЬ
-   nodes: { id, title, type, shortDesc (в дереве), fullDesc (полное), x, y }
 ============================================================ */
-let nodes = [];
+let nodes = [];   // {id, title, type, desc, x, y}
 let edges = [];
 let selectedId = null;
-let selectedDescId = null;  // выбранный узел на вкладке «Описания»
 
 let savedSelectionText = '';
 let savedRange = null;
@@ -774,13 +769,15 @@ const selInfo = document.getElementById('sel-info');
 const btnMake = document.getElementById('btn-make-node');
 const btnLink = document.getElementById('btn-link-to-node');
 
-const descsList = document.getElementById('descs-list');
-const descsEditorCard = document.getElementById('descs-editor-card');
-const descsEmpty = document.getElementById('descs-empty');
-const descsTitle = document.getElementById('descs-title');
-const descsMeta = document.getElementById('descs-meta');
-const descsTextarea = document.getElementById('descs-textarea');
-const descsCharCount = document.getElementById('descs-char-count');
+const descNodeList = document.getElementById('desc-node-list');
+const descHeader = document.getElementById('desc-header');
+const descBody = document.getElementById('desc-body');
+const descEmpty = document.getElementById('desc-empty');
+const descFullText = document.getElementById('desc-full-text');
+const descCounter = document.getElementById('desc-counter');
+const descPreview = document.getElementById('desc-preview');
+
+let descSelectedId = null;   // узел, выбранный на вкладке "Описания узлов"
 
 const uid = () => 'n' + Date.now() + Math.random().toString(36).slice(2, 7);
 const getNode = id => nodes.find(n => n.id === id);
@@ -797,11 +794,43 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// Краткий фрагмент полного описания для показа в дереве
-function shortPreview(text, max = 100) {
-  if (!text) return '';
-  const t = text.trim().replace(/\s+/g, ' ');
-  return t.length > max ? t.slice(0, max) + '…' : t;
+/* ============================================================
+   ОБРЕЗКА ДО 20 СИМВОЛОВ ПО ГРАНИЦЕ СЛОВА
+   Правило:
+   - если весь текст укладывается в 20 символов — показываем как есть
+   - иначе берём только слова, которые целиком влезают в 20 символов
+   - если слово обрывается на 20-м символе — оно НЕ включается
+   - после обрезки добавляем "…"
+============================================================ */
+const DESC_MAX = 20;
+function truncateByWord(text) {
+  const s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  if (s.length <= DESC_MAX) return s;
+
+  // Разбиваем на слова (пробелы/переносы уже схлопнуты)
+  const words = s.split(' ');
+  let result = '';
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    const candidate = result ? result + ' ' + w : w;
+    if (candidate.length <= DESC_MAX) {
+      result = candidate;
+    } else {
+      break;
+    }
+  }
+
+  // Если даже первое слово не влезает — берём первые 20 символов без обрезки слова?
+  // По условию: "если в 20 символах слово обрывается, то это слово не пишется вообще".
+  // Значит если первое слово длиннее 20 — показывать нечего. Но пустая карточка некрасива.
+  // Покажем первые 20 символов, но без троеточия (слово не обрезаем — значит ничего не пишем).
+  if (!result) {
+    // Первое слово длиннее 20 — по правилу его писать нельзя.
+    return '';
+  }
+
+  return result + '…';
 }
 
 /* ============================================================
@@ -813,8 +842,9 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.pane + '-pane').classList.add('active');
+
     if (tab.dataset.pane === 'tree') renderEdges();
-    if (tab.dataset.pane === 'descs') renderDescsTab();
+    if (tab.dataset.pane === 'desc') renderDescSidebar();
   });
 });
 
@@ -832,13 +862,13 @@ function renderTree() {
     el.style.top = n.y + 'px';
     if (n.id === selectedId) el.classList.add('selected');
 
-    // В дереве показываем краткое описание, если пусто — превью полного
-    const displayDesc = n.shortDesc || shortPreview(n.fullDesc) || '';
+    // Показываем обрезанное по словам описание (до 20 символов)
+    const shortDesc = truncateByWord(n.desc);
 
     el.innerHTML = `
       <span class="node-badge ${typeBadge[n.type]}">${typeLabel[n.type]}</span>
       <div class="node-title">${escapeHtml(n.title) || 'Без названия'}</div>
-      <div class="node-desc">${escapeHtml(displayDesc) || '<i>без описания</i>'}</div>
+      <div class="node-desc">${escapeHtml(shortDesc) || '<i>без описания</i>'}</div>
       <div class="port in" data-port="in" data-id="${n.id}"></div>
       <div class="port out" data-port="out" data-id="${n.id}"></div>
     `;
@@ -1023,7 +1053,7 @@ function selectNode(id) {
   editor.style.display = 'block';
   document.getElementById('edit-title').value = n.title;
   document.getElementById('edit-type').value = n.type;
-  document.getElementById('edit-desc').value = n.shortDesc || '';
+  document.getElementById('edit-desc').value = n.desc;
   renderEditorLinks();
 }
 
@@ -1078,17 +1108,25 @@ document.getElementById('edit-title').addEventListener('input', e => {
   const n = getNode(selectedId); if (!n) return;
   n.title = e.target.value;
   updateNodeVisual(n);
-  renderDescsList();
+  renderDescSidebar();
 });
 document.getElementById('edit-type').addEventListener('change', e => {
   const n = getNode(selectedId); if (!n) return;
   n.type = e.target.value;
   updateNodeVisual(n);
+  renderDescSidebar();
 });
 document.getElementById('edit-desc').addEventListener('input', e => {
   const n = getNode(selectedId); if (!n) return;
-  n.shortDesc = e.target.value;
+  n.desc = e.target.value;
   updateNodeVisual(n);
+  renderDescSidebar();
+  // синхронизируем поле на вкладке описаний, если открыт тот же узел
+  if (descSelectedId === n.id) {
+    descFullText.value = n.desc;
+    updateDescCounter();
+    updateDescPreview();
+  }
 });
 
 function updateNodeVisual(n) {
@@ -1098,9 +1136,8 @@ function updateNodeVisual(n) {
   el.querySelector('.node-badge').className = 'node-badge ' + typeBadge[n.type];
   el.querySelector('.node-badge').textContent = typeLabel[n.type];
   el.querySelector('.node-title').textContent = n.title || 'Без названия';
-
-  const displayDesc = n.shortDesc || shortPreview(n.fullDesc) || '';
-  el.querySelector('.node-desc').innerHTML = escapeHtml(displayDesc) || '<i>без описания</i>';
+  const shortDesc = truncateByWord(n.desc);
+  el.querySelector('.node-desc').innerHTML = escapeHtml(shortDesc) || '<i>без описания</i>';
 }
 
 document.querySelectorAll('[data-add]').forEach(btn => {
@@ -1109,10 +1146,10 @@ document.querySelectorAll('[data-add]').forEach(btn => {
     const x = 60 + Math.random() * 400;
     const y = 60 + Math.random() * 400;
     const id = uid();
-    nodes.push({ id, title: 'Новый узел', type, shortDesc: '', fullDesc: '', x, y });
+    nodes.push({ id, title: 'Новый узел', type, desc: '', x, y });
     renderTree();
     selectNode(id);
-    renderDescsList();
+    renderDescSidebar();
     setStatus('Узел добавлен');
   });
 });
@@ -1125,12 +1162,16 @@ document.getElementById('btn-delete').addEventListener('click', () => {
   const idToDelete = selectedId;
   nodes = nodes.filter(n => n.id !== idToDelete);
   edges = edges.filter(e => e.from !== idToDelete && e.to !== idToDelete);
-  if (selectedDescId === idToDelete) selectedDescId = null;
+  if (descSelectedId === idToDelete) {
+    descSelectedId = null;
+    descHeader.style.display = 'none';
+    descBody.style.display = 'none';
+    descEmpty.style.display = 'flex';
+  }
   selectedId = null;
   renderTree();
   selectNode(null);
-  renderDescsList();
-  renderDescsTab();
+  renderDescSidebar();
   setStatus('Узел удалён');
 });
 
@@ -1181,23 +1222,117 @@ document.getElementById('btn-load').addEventListener('click', () => {
     nodes = data.nodes || [];
     edges = data.edges || [];
     selectedId = null;
-    selectedDescId = null;
+    descSelectedId = null;
     renderTree();
     selectNode(null);
-    renderDescsList();
-    renderDescsTab();
+    renderDescSidebar();
+    descHeader.style.display = 'none';
+    descBody.style.display = 'none';
+    descEmpty.style.display = 'flex';
     setStatus('Загружено');
   } catch (e) { setStatus('Ошибка загрузки'); }
 });
 document.getElementById('btn-clear').addEventListener('click', () => {
   if (!confirm('Удалить ВСЕ узлы и связи?')) return;
-  nodes = []; edges = []; selectedId = null; selectedDescId = null;
-  renderTree(); selectNode(null); renderDescsList(); renderDescsTab();
+  nodes = []; edges = []; selectedId = null; descSelectedId = null;
+  renderTree(); selectNode(null); renderDescSidebar();
+  descHeader.style.display = 'none';
+  descBody.style.display = 'none';
+  descEmpty.style.display = 'flex';
   setStatus('Очищено');
 });
 
 /* ============================================================
-   ТЕКСТ СЮЖЕТА — работа с выделением
+   ВКЛАДКА "ОПИСАНИЯ УЗЛОВ"
+============================================================ */
+function renderDescSidebar() {
+  descNodeList.innerHTML = '';
+  if (nodes.length === 0) {
+    descNodeList.innerHTML = '<div class="desc-sidebar-empty">Нет узлов. Добавьте их на вкладке «Дерево сюжета».</div>';
+    return;
+  }
+  nodes.forEach(n => {
+    const item = document.createElement('div');
+    item.className = 'desc-node-item' + (n.id === descSelectedId ? ' active' : '');
+    const preview = truncateByWord(n.desc) || '— без описания —';
+    item.innerHTML = `
+      <div class="dn-title">${escapeHtml(n.title) || 'Без названия'}</div>
+      <div class="dn-preview">${escapeHtml(preview)}</div>
+      <span class="dn-type ${typeBadge[n.type]}">${typeLabel[n.type]}</span>
+    `;
+    item.addEventListener('click', () => openDescEditor(n.id));
+    descNodeList.appendChild(item);
+  });
+}
+
+function openDescEditor(id) {
+  const n = getNode(id);
+  if (!n) return;
+  descSelectedId = id;
+  descEmpty.style.display = 'none';
+  descHeader.style.display = 'flex';
+  descBody.style.display = 'block';
+  document.getElementById('desc-header-title').textContent = n.title || 'Без названия';
+  const typeEl = document.getElementById('desc-header-type');
+  typeEl.className = 'dmh-type ' + typeBadge[n.type];
+  typeEl.textContent = typeLabel[n.type];
+  descFullText.value = n.desc || '';
+  updateDescCounter();
+  updateDescPreview();
+  // подсветить в списке
+  document.querySelectorAll('.desc-node-item').forEach(el => el.classList.remove('active'));
+  // найдём по индексу
+  const idx = nodes.findIndex(nn => nn.id === id);
+  if (idx >= 0 && descNodeList.children[idx]) {
+    descNodeList.children[idx].classList.add('active');
+  }
+}
+
+function updateDescCounter() {
+  const len = descFullText.value.length;
+  descCounter.textContent = len + ' ' + plural(len, ['символ', 'символа', 'символов']);
+}
+function plural(n, forms) {
+  const a = Math.abs(n) % 100;
+  const b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b > 1 && b < 5) return forms[1];
+  if (b === 1) return forms[0];
+  return forms[2];
+}
+
+function updateDescPreview() {
+  const short = truncateByWord(descFullText.value);
+  descPreview.textContent = short || '— пусто —';
+}
+
+descFullText.addEventListener('input', () => {
+  if (!descSelectedId) return;
+  const n = getNode(descSelectedId);
+  if (!n) return;
+  n.desc = descFullText.value;
+  updateDescCounter();
+  updateDescPreview();
+  // обновляем карточку в дереве, если открыт тот же узел в редакторе
+  const el = treeInner.querySelector(`.node[data-id="${n.id}"]`);
+  if (el) {
+    const shortDesc = truncateByWord(n.desc);
+    el.querySelector('.node-desc').innerHTML = escapeHtml(shortDesc) || '<i>без описания</i>';
+  }
+  // синхронизируем textarea на вкладке дерева
+  if (selectedId === n.id) {
+    document.getElementById('edit-desc').value = n.desc;
+  }
+  // обновим превью в боковом списке
+  const idx = nodes.findIndex(nn => nn.id === n.id);
+  if (idx >= 0 && descNodeList.children[idx]) {
+    const prev = truncateByWord(n.desc) || '— без описания —';
+    descNodeList.children[idx].querySelector('.dn-preview').textContent = prev;
+  }
+});
+
+/* ============================================================
+   ТЕКСТ СЮЖЕТА — РАБОТА С ВЫДЕЛЕНИЕМ
 ============================================================ */
 (function restoreStoryText() {
   const saved = localStorage.getItem('storyText');
@@ -1211,6 +1346,7 @@ storyEditor.addEventListener('input', () => {
 function captureSelection() {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return;
+
   const range = sel.getRangeAt(0);
   if (!storyEditor.contains(range.commonAncestorContainer)) return;
 
@@ -1220,6 +1356,7 @@ function captureSelection() {
     updateSelectionUI();
     return;
   }
+
   const text = sel.toString().trim();
   if (!text) {
     savedSelectionText = '';
@@ -1227,6 +1364,7 @@ function captureSelection() {
     updateSelectionUI();
     return;
   }
+
   savedSelectionText = text;
   savedRange = range.cloneRange();
   updateSelectionUI();
@@ -1237,10 +1375,12 @@ storyEditor.addEventListener('keyup', () => setTimeout(captureSelection, 10));
 
 document.addEventListener('selectionchange', () => {
   if (document.querySelector('.modal-overlay.active')) return;
+
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return;
   const range = sel.getRangeAt(0);
   if (!storyEditor.contains(range.commonAncestorContainer)) return;
+
   if (sel.isCollapsed) {
     if (document.activeElement !== storyEditor) return;
     savedSelectionText = '';
@@ -1248,6 +1388,7 @@ document.addEventListener('selectionchange', () => {
     updateSelectionUI();
     return;
   }
+
   const text = sel.toString().trim();
   if (text) {
     savedSelectionText = text;
@@ -1274,9 +1415,13 @@ function showBanner(text) {
   sbText.textContent = text.length > 60 ? text.slice(0, 60) + '…' : text;
   banner.classList.add('show');
 }
-function hideBanner() { banner.classList.remove('show'); }
+function hideBanner() {
+  banner.classList.remove('show');
+}
 
-document.getElementById('sb-cancel').addEventListener('click', clearSelection);
+document.getElementById('sb-cancel').addEventListener('click', () => {
+  clearSelection();
+});
 
 function clearSelection() {
   savedSelectionText = '';
@@ -1286,10 +1431,12 @@ function clearSelection() {
 }
 
 function openMakeNodeModal() {
-  if (!savedSelectionText) { setStatus('Сначала выделите текст'); return; }
+  if (!savedSelectionText) {
+    setStatus('Сначала выделите текст');
+    return;
+  }
   document.getElementById('mn-title').value = savedSelectionText.slice(0, 60);
-  document.getElementById('mn-desc').value = shortPreview(savedSelectionText, 100);
-  document.getElementById('mn-fulldesc').value = savedSelectionText;
+  document.getElementById('mn-desc').value = savedSelectionText;
 
   const parentSel = document.getElementById('mn-parent');
   parentSel.innerHTML = '<option value="">— Не привязывать (корневой) —</option>';
@@ -1299,6 +1446,7 @@ function openMakeNodeModal() {
     opt.textContent = `${n.title || 'Без названия'} [${typeLabel[n.type]}]`;
     parentSel.appendChild(opt);
   });
+
   document.getElementById('make-node-modal').classList.add('active');
 }
 
@@ -1311,8 +1459,7 @@ document.getElementById('mn-cancel').addEventListener('click', () => {
 document.getElementById('mn-save').addEventListener('click', () => {
   const title = document.getElementById('mn-title').value.trim() || 'Без названия';
   const type = document.getElementById('mn-type').value;
-  const shortDesc = document.getElementById('mn-desc').value;
-  const fullDesc = document.getElementById('mn-fulldesc').value;
+  const desc = document.getElementById('mn-desc').value;
   const parentId = document.getElementById('mn-parent').value;
 
   const id = uid();
@@ -1326,20 +1473,26 @@ document.getElementById('mn-save').addEventListener('click', () => {
     y = 80 + Math.random() * 400;
   }
 
-  nodes.push({ id, title, type, shortDesc, fullDesc, x, y });
+  nodes.push({ id, title, type, desc, x, y });
   if (parentId) edges.push({ from: parentId, to: id });
 
   document.getElementById('make-node-modal').classList.remove('active');
   clearSelection();
   renderTree();
   selectNode(id);
-  renderDescsList();
+  renderDescSidebar();
   setStatus('Узел создан из выделения');
 });
 
 function openLinkToNodeModal() {
-  if (!savedSelectionText) { setStatus('Сначала выделите текст'); return; }
-  if (nodes.length === 0) { setStatus('Сначала создайте хотя бы один узел'); return; }
+  if (!savedSelectionText) {
+    setStatus('Сначала выделите текст');
+    return;
+  }
+  if (nodes.length === 0) {
+    setStatus('Сначала создайте хотя бы один узел');
+    return;
+  }
   const sel = document.getElementById('ltn-select');
   sel.innerHTML = '';
   nodes.forEach(n => {
@@ -1361,14 +1514,18 @@ document.getElementById('ltn-ok').addEventListener('click', () => {
   const id = document.getElementById('ltn-select').value;
   const n = getNode(id);
   if (!n) return;
-  n.fullDesc = (n.fullDesc ? n.fullDesc + '\n\n' : '') + savedSelectionText;
+  n.desc = (n.desc ? n.desc + '\n\n' : '') + savedSelectionText;
   document.getElementById('link-to-node-modal').classList.remove('active');
   clearSelection();
   renderTree();
   if (selectedId === id) selectNode(id);
-  if (selectedDescId === id) renderDescsTab();
-  renderDescsList();
-  setStatus('Выделение привязано к полному описанию узла');
+  if (descSelectedId === id) {
+    descFullText.value = n.desc;
+    updateDescCounter();
+    updateDescPreview();
+  }
+  renderDescSidebar();
+  setStatus('Выделение привязано к описанию узла');
 });
 
 document.getElementById('story-export').addEventListener('click', () => {
@@ -1386,148 +1543,14 @@ document.getElementById('story-export').addEventListener('click', () => {
   setStatus('Экспортировано');
 });
 
-/* ============================================================
-   ВКЛАДКА «ОПИСАНИЯ УЗЛОВ»
-============================================================ */
-
-// Список слева
-function renderDescsList() {
-  descsList.innerHTML = '';
-  if (nodes.length === 0) return;
-
-  nodes.forEach(n => {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className = 'desc-list-item' + (n.id === selectedDescId ? ' active' : '');
-    const preview = n.fullDesc ? shortPreview(n.fullDesc, 80) : '';
-    item.innerHTML = `
-      <span class="dli-badge ${typeBadge[n.type]}">${typeLabel[n.type]}</span>
-      <div class="dli-title">${escapeHtml(n.title) || 'Без названия'}</div>
-      <div class="dli-preview ${preview ? '' : 'empty'}">${preview ? escapeHtml(preview) : '— пусто —'}</div>
-      <div class="dli-count">${n.fullDesc ? n.fullDesc.length + ' симв.' : 'нет описания'}</div>
-    `;
-    item.addEventListener('click', () => {
-      selectedDescId = n.id;
-      renderDescsTab();
-    });
-    descsList.appendChild(item);
-  });
-}
-
-// Правая часть
-function renderDescsTab() {
-  renderDescsList();
-
-  if (nodes.length === 0) {
-    descsEditorCard.style.display = 'none';
-    descsEmpty.style.display = 'block';
-    return;
-  }
-
-  // Если ничего не выбрано — выбираем первый узел
-  if (!selectedDescId || !getNode(selectedDescId)) {
-    selectedDescId = nodes[0].id;
-    renderDescsList();
-  }
-
-  const n = getNode(selectedDescId);
-  if (!n) {
-    descsEditorCard.style.display = 'none';
-    descsEmpty.style.display = 'block';
-    return;
-  }
-
-  descsEmpty.style.display = 'none';
-  descsEditorCard.style.display = 'block';
-
-  descsTitle.textContent = n.title || 'Без названия';
-  descsMeta.innerHTML = `Тип: <span class="node-badge ${typeBadge[n.type]}" style="margin:0;font-size:10px;">${typeLabel[n.type]}</span>
-    &nbsp;•&nbsp; Краткое описание в дереве: ${n.shortDesc ? 'есть' : '<i>нет</i>'}
-    &nbsp;•&nbsp; <a href="#" id="descs-goto-tree-link" style="color:#89b4fa;">Показать в дереве</a>`;
-
-  descsTextarea.value = n.fullDesc || '';
-  updateDescsCharCount();
-
-  const gotoLink = document.getElementById('descs-goto-tree-link');
-  if (gotoLink) {
-    gotoLink.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      selectNode(n.id);
-      document.querySelector('.tab[data-pane="tree"]').click();
-      setTimeout(() => {
-        const el = treeInner.querySelector(`.node[data-id="${n.id}"]`);
-        if (el) {
-          el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
-        }
-      }, 100);
-    });
-  }
-}
-
-function updateDescsCharCount() {
-  descsCharCount.textContent = `${descsTextarea.value.length} символов`;
-}
-
-// Автосохранение при вводе
-descsTextarea.addEventListener('input', () => {
-  if (!selectedDescId) return;
-  const n = getNode(selectedDescId);
-  if (!n) return;
-  n.fullDesc = descsTextarea.value;
-  updateDescsCharCount();
-  // Обновить превью в списке и в дереве
-  renderDescsList();
-  updateNodeVisual(n);
-  if (n.id === selectedId) {
-    // краткое описание не меняется, но если его нет — в дереве используется превью полного
-    if (!n.shortDesc) updateNodeVisual(n);
-  }
-});
-
-document.getElementById('descs-save-btn').addEventListener('click', () => {
-  if (!selectedDescId) return;
-  const n = getNode(selectedDescId);
-  if (!n) return;
-  n.fullDesc = descsTextarea.value;
-  renderDescsList();
-  updateNodeVisual(n);
-  setStatus('Описание сохранено');
-});
-
-document.getElementById('descs-clear-btn').addEventListener('click', () => {
-  if (!selectedDescId) return;
-  if (!descsTextarea.value) return;
-  if (!confirm('Очистить полное описание этого узла?')) return;
-  const n = getNode(selectedDescId);
-  if (!n) return;
-  n.fullDesc = '';
-  descsTextarea.value = '';
-  updateDescsCharCount();
-  renderDescsList();
-  updateNodeVisual(n);
-  setStatus('Описание очищено');
-});
-
-document.getElementById('descs-goto-tree').addEventListener('click', () => {
-  document.querySelector('.tab[data-pane="tree"]').click();
-});
-
 window.addEventListener('resize', renderEdges);
 
-/* ============================================================
-   ИНИЦИАЛИЗАЦИЯ
-============================================================ */
 (function init() {
   const raw = localStorage.getItem('plotTree');
   if (raw) {
     try {
       const d = JSON.parse(raw);
-      nodes = (d.nodes || []).map(n => ({
-        // совместимость со старой моделью (desc -> shortDesc)
-        ...n,
-        shortDesc: n.shortDesc != null ? n.shortDesc : (n.desc || ''),
-        fullDesc: n.fullDesc || ''
-      }));
+      nodes = d.nodes || [];
       edges = d.edges || [];
     } catch (e) {}
   }
@@ -1535,24 +1558,22 @@ window.addEventListener('resize', renderEdges);
     const startId = uid();
     nodes.push({
       id: startId, title: 'Начало истории', type: 'event',
-      shortDesc: 'Герой просыпается в незнакомом месте.',
-      fullDesc: 'Герой просыпается в незнакомом месте. Вокруг тишина, только ветер шелестит листвой. Он не помнит, как здесь оказался...',
-      x: 80, y: 200
+      desc: 'Герой просыпается в незнакомом месте.', x: 80, y: 200
     });
     const c1 = uid();
     nodes.push({
       id: c1, title: 'Пойти налево', type: 'choice',
-      shortDesc: 'Выбор пути.', fullDesc: '', x: 380, y: 80
+      desc: 'Выбор пути.', x: 380, y: 80
     });
     const c2 = uid();
     nodes.push({
       id: c2, title: 'Пойти направо', type: 'choice',
-      shortDesc: 'Выбор пути.', fullDesc: '', x: 380, y: 320
+      desc: 'Выбор пути.', x: 380, y: 320
     });
     edges.push({ from: startId, to: c1 }, { from: startId, to: c2 });
   }
   renderTree();
-  renderDescsList();
+  renderDescSidebar();
 })();
 </script>
 </body>
