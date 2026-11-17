@@ -2,16 +2,16 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Редактор дерева сюжета</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
+    height: 100%;
+    overflow: hidden;
     font-family: 'Segoe UI', Tahoma, sans-serif;
     background: #1e1e2e;
     color: #cdd6f4;
-    height: 100%;
-    overflow: hidden;
     overscroll-behavior: none;
   }
   body { display: flex; flex-direction: column; }
@@ -21,17 +21,19 @@
     background: #181825;
     border-bottom: 2px solid #313244;
     flex-shrink: 0;
+    overflow-x: auto;
   }
   .tab {
-    padding: 14px 28px;
+    padding: 14px 20px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     color: #7f849c;
     border-bottom: 3px solid transparent;
     transition: all 0.2s;
     user-select: none;
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .tab:hover { background: #1e1e2e; color: #cdd6f4; }
   .tab.active {
@@ -45,31 +47,33 @@
   .pane.active { display: flex; }
 
   /* ===== ДЕРЕВО ===== */
-  #tree-pane { flex-direction: row; }
+  #tree-pane { flex-direction: row; position: relative; }
 
   #tree-canvas {
     flex: 1;
     position: relative;
-    overflow: hidden;              /* скролл через transform-слой */
+    overflow: hidden;
     background:
       linear-gradient(90deg, rgba(137,180,250,0.05) 1px, transparent 1px) 0 0 / 40px 40px,
       linear-gradient(rgba(137,180,250,0.05) 1px, transparent 1px) 0 0 / 40px 40px,
       #1e1e2e;
-    touch-action: none;            /* жесты полностью наши */
+    touch-action: none;
+    user-select: none;
   }
 
-  /* Слой, который масштабируется и панорамируется */
   #tree-viewport {
     position: absolute;
-    top: 0; left: 0;
+    inset: 0;
     transform-origin: 0 0;
     will-change: transform;
   }
 
   #tree-inner {
     position: relative;
-    width: 3000px;
-    height: 2000px;
+    min-width: 3000px;
+    min-height: 2000px;
+    padding: 40px;
+    transform-origin: 0 0;
   }
 
   svg#edges {
@@ -134,7 +138,7 @@
 
   .port {
     position: absolute;
-    width: 22px; height: 22px;
+    width: 14px; height: 14px;
     border-radius: 50%;
     background: #45475a;
     border: 2px solid #1e1e2e;
@@ -143,30 +147,71 @@
     touch-action: none;
   }
   .port:hover { background: #89b4fa; transform: scale(1.2); }
-  .port.out { right: -11px; top: 50%; transform: translateY(-50%); }
+  .port.out { right: -8px; top: 50%; transform: translateY(-50%); }
   .port.out:hover { transform: translateY(-50%) scale(1.2); }
-  .port.in { left: -11px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .port.in { left: -8px; top: 50%; transform: translateY(-50%); }
 
-  /* ===== ПРАВАЯ ПАНЕЛЬ ===== */
+  /* Плавающие кнопки зума */
+  .zoom-controls {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 20;
+  }
+  .zoom-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: #313244;
+    border: 1px solid #45475a;
+    color: #cdd6f4;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+  .zoom-btn:active { background: #45475a; }
+
+  /* ===== Правая панель / ящик ===== */
   .toolbar {
-    width: 280px;
+    width: 300px;
     background: #181825;
     border-left: 2px solid #313244;
     padding: 18px;
     overflow-y: auto;
     flex-shrink: 0;
     position: relative;
-    transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease;
   }
-  .toolbar.collapsed {
-    width: 0;
-    padding-left: 0;
-    padding-right: 0;
-    border-left: none;
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
+  /* Таб-стрелка, всегда видна на границе */
+  .drawer-tab {
+    display: none;
+    position: absolute;
+    left: -26px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 56px;
+    background: #313244;
+    border: 1px solid #45475a;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #89b4fa;
+    font-size: 18px;
+    font-weight: 700;
+    z-index: 40;
+    user-select: none;
+    box-shadow: -3px 0 10px rgba(0,0,0,0.4);
   }
+
   .toolbar h3 {
     font-size: 13px;
     text-transform: uppercase;
@@ -175,32 +220,7 @@
     margin-bottom: 10px;
     margin-top: 18px;
   }
-  .toolbar h3:first-child { margin-top: 0; }
-
-  /* Стрелка-переключатель на границе панели */
-  #panel-toggle {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translate(-50%, -50%);
-    width: 30px; height: 60px;
-    background: #89b4fa;
-    color: #1e1e2e;
-    border: 2px solid #1e1e2e;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1;
-    display: none;                /* только на мобилке */
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-    user-select: none;
-    padding: 0;
-  }
-  #panel-toggle:active { background: #a5c8ff; }
+  .toolbar h3:first-of-type { margin-top: 0; }
 
   .btn {
     display: block;
@@ -297,10 +317,10 @@
     color: #1e1e2e;
     border: none;
     border-radius: 4px;
-    width: 26px; height: 26px;
+    width: 22px; height: 22px;
     cursor: pointer;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1;
     flex-shrink: 0;
   }
@@ -313,7 +333,7 @@
     margin: 10px 0 6px;
   }
 
-  /* ===== ТЕКСТ СЮЖЕТА ===== */
+  /* ===== Текст ===== */
   #story-pane {
     flex-direction: column;
     overflow: hidden;
@@ -340,10 +360,9 @@
   #story-editor-wrap {
     flex: 1;
     overflow-y: auto;
-    padding: 30px 20px;
+    padding: 20px;
     display: flex;
     justify-content: center;
-    -webkit-overflow-scrolling: touch;
   }
   #story-editor {
     width: 100%;
@@ -351,7 +370,7 @@
     min-height: 100%;
     background: #313244;
     border-radius: 12px;
-    padding: 30px 36px;
+    padding: 24px 28px;
     font-size: 16px;
     line-height: 1.8;
     color: #cdd6f4;
@@ -360,8 +379,6 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     white-space: pre-wrap;
     word-wrap: break-word;
-    user-select: text;
-    -webkit-user-select: text;
   }
   #story-editor:empty::before {
     content: attr(data-placeholder);
@@ -375,11 +392,8 @@
     color: #1e1e2e;
   }
 
-  /* ===== ОПИСАНИЯ УЗЛОВ ===== */
-  #desc-pane {
-    flex-direction: row;
-    overflow: hidden;
-  }
+  /* ===== Описания ===== */
+  #desc-pane { flex-direction: row; overflow: hidden; }
   .desc-sidebar {
     width: 280px;
     background: #181825;
@@ -387,7 +401,6 @@
     overflow-y: auto;
     flex-shrink: 0;
     padding: 12px 0;
-    -webkit-overflow-scrolling: touch;
   }
   .desc-sidebar-title {
     font-size: 11px;
@@ -409,10 +422,7 @@
     gap: 3px;
   }
   .desc-node-item:hover { background: #1e1e2e; }
-  .desc-node-item.active {
-    background: #313244;
-    border-left-color: #89b4fa;
-  }
+  .desc-node-item.active { background: #313244; border-left-color: #89b4fa; }
   .desc-node-item .dn-title {
     font-weight: 600;
     color: #f5e0dc;
@@ -444,14 +454,7 @@
     text-align: center;
     font-style: italic;
   }
-
-  .desc-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
-  }
+  .desc-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   .desc-main-header {
     padding: 16px 24px;
     background: #181825;
@@ -461,30 +464,12 @@
     align-items: center;
     flex-shrink: 0;
   }
-  .desc-main-header .dmh-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: #f5e0dc;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .desc-main-header .dmh-title { font-size: 17px; font-weight: 700; color: #f5e0dc; flex: 1; }
   .desc-main-header .dmh-type {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-weight: 700;
-    white-space: nowrap;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 3px 8px; border-radius: 4px; font-weight: 700;
   }
-  .desc-main-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px;
-    -webkit-overflow-scrolling: touch;
-  }
+  .desc-main-body { flex: 1; overflow-y: auto; padding: 24px; }
   .desc-main-body textarea {
     width: 100%;
     min-height: 400px;
@@ -501,23 +486,11 @@
   }
   .desc-main-body textarea:focus { border-color: #89b4fa; }
   .desc-main-empty {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 12px;
-    color: #6c7086;
-    font-size: 15px;
-    text-align: center;
-    padding: 40px;
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px; color: #6c7086;
+    font-size: 15px; text-align: center; padding: 40px;
   }
-  .desc-counter {
-    font-size: 11px;
-    color: #7f849c;
-    margin-top: 8px;
-    text-align: right;
-  }
+  .desc-counter { font-size: 11px; color: #7f849c; margin-top: 8px; text-align: right; }
   .desc-preview-box {
     margin-top: 16px;
     padding: 12px 16px;
@@ -526,17 +499,10 @@
     border-radius: 8px;
   }
   .desc-preview-box .dpb-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #7f849c;
-    margin-bottom: 6px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: #7f849c; margin-bottom: 6px;
   }
-  .desc-preview-box .dpb-text {
-    font-size: 12px;
-    color: #a6adc8;
-    font-style: italic;
-  }
+  .desc-preview-box .dpb-text { font-size: 12px; color: #a6adc8; font-style: italic; }
 
   .modal-overlay {
     position: fixed;
@@ -551,22 +517,17 @@
   .modal-overlay.active { display: flex; }
   .modal {
     background: #313244;
-    padding: 24px;
+    padding: 22px;
     border-radius: 12px;
     width: 460px;
     max-width: 100%;
-    max-height: 85vh;
+    max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-    -webkit-overflow-scrolling: touch;
   }
-  .modal h3 { margin-bottom: 16px; color: #f5e0dc; }
+  .modal h3 { margin-bottom: 16px; color: #f5e0dc; font-size: 16px; }
   .modal .field textarea { min-height: 100px; }
-  .modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
   .modal-actions .btn { flex: 1; margin: 0; text-align: center; }
 
   #selection-banner {
@@ -577,118 +538,84 @@
     background: #313244;
     border: 2px solid #f9e2af;
     border-radius: 12px;
-    padding: 12px 16px;
+    padding: 10px 12px;
     display: flex;
     gap: 8px;
     align-items: center;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
     transition: transform 0.25s ease;
     z-index: 500;
-    max-width: 92vw;
+    max-width: 95vw;
     flex-wrap: wrap;
     justify-content: center;
   }
   #selection-banner.show { transform: translateX(-50%) translateY(0); }
   #selection-banner .sb-text {
-    font-size: 12px;
-    color: #f9e2af;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 12px; color: #f9e2af;
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   #selection-banner .btn {
-    width: auto;
-    margin: 0;
-    padding: 8px 14px;
-    font-size: 13px;
+    width: auto; margin: 0; padding: 7px 12px; font-size: 12.5px;
   }
 
-  /* ============================================================
-     МОБИЛЬНАЯ ВЕРСИЯ
-  ============================================================ */
-  body.mobile .tabs { overflow-x: auto; }
-  body.mobile .tab { padding: 14px 16px; font-size: 14px; }
-
-  body.mobile #panel-toggle { display: flex; }
+  /* ======================================================
+     МОБИЛЬНЫЙ РЕЖИМ (<= 820px)
+     ====================================================== */
+  body.mobile .drawer-tab { display: flex; }
 
   body.mobile .toolbar {
-    width: 300px;               /* чуть шире для пальцев */
-  }
-  body.mobile .toolbar.collapsed { width: 0; }
-  body.mobile .btn { padding: 13px 14px; font-size: 15px; }
-  body.mobile .field input,
-  body.mobile .field textarea,
-  body.mobile .field select { font-size: 16px; padding: 12px; }
-  body.mobile .link-item button { width: 34px; height: 34px; font-size: 17px; }
-
-  /* Узлы крупнее на мобилке не нужны — их масштабируют пальцами */
-
-  /* Кнопки сюжета — крупные */
-  body.mobile .story-toolbar {
-    padding: 10px 12px;
-    gap: 8px;
-  }
-  body.mobile .story-toolbar .btn { padding: 12px 14px; font-size: 14px; }
-  body.mobile .story-toolbar .selected-info { display: none; } /* не мешаем — есть плашка снизу */
-
-  body.mobile #story-editor-wrap { padding: 16px 10px; }
-  body.mobile #story-editor { padding: 20px 18px; font-size: 17px; }
-
-  /* Описания узлов на мобилке: список сверху, редактор снизу */
-  body.mobile #desc-pane { flex-direction: column; }
-  body.mobile .desc-sidebar {
-    width: 100%;
-    max-height: 38vh;
-    border-right: none;
-    border-bottom: 2px solid #313244;
-  }
-  body.mobile .desc-main-header { padding: 12px 16px; }
-  body.mobile .desc-main-header .dmh-title { font-size: 15px; }
-  body.mobile .desc-main-body { padding: 16px; }
-  body.mobile .desc-main-body textarea { font-size: 16px; min-height: 300px; }
-
-  /* Плавающая панель масштаба на дереве */
-  #zoom-controls {
     position: absolute;
-    bottom: 16px;
-    left: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 15;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(320px, 88vw);
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    z-index: 35;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.5);
+  }
+  body.mobile .toolbar.open { transform: translateX(0); }
+
+  body.mobile .toolbar-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s;
+    transition: opacity 0.28s;
+    z-index: 34;
   }
-  body.mobile #zoom-controls {
+  body.mobile .toolbar-backdrop.show {
     opacity: 1;
     pointer-events: auto;
   }
-  #zoom-controls button {
-    width: 46px; height: 46px;
-    border-radius: 12px;
-    background: #313244;
-    border: 2px solid #45475a;
-    color: #cdd6f4;
-    font-size: 22px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+  /* Вкладка "Описания" на телефоне: вертикально */
+  body.mobile #desc-pane { flex-direction: column; }
+  body.mobile .desc-sidebar {
+    width: 100%;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 2px solid #313244;
   }
-  #zoom-controls button:active { background: #45475a; }
+  body.mobile .desc-main { flex: 1; }
+
+  /* Кнопки зума больше на телефоне */
+  body.mobile .zoom-btn { width: 46px; height: 46px; font-size: 22px; }
+  body.mobile .port { width: 20px; height: 20px; }
+  body.mobile .port.out { right: -11px; }
+  body.mobile .port.in { left: -11px; }
+
+  /* Модалки на телефоне во всю ширину */
+  body.mobile .modal { padding: 18px; }
 </style>
 </head>
 <body>
 
 <div class="tabs">
-  <div class="tab active" data-pane="tree">🌳 Дерево сюжета</div>
-  <div class="tab" data-pane="story">📖 Текст сюжета</div>
-  <div class="tab" data-pane="desc">📝 Описания узлов</div>
+  <div class="tab active" data-pane="tree">🌳 Дерево</div>
+  <div class="tab" data-pane="story">📖 Текст</div>
+  <div class="tab" data-pane="desc">📝 Описания</div>
 </div>
 
 <div class="content">
@@ -700,14 +627,17 @@
           <svg id="edges"></svg>
         </div>
       </div>
-      <div id="zoom-controls">
-        <button id="zoom-in" title="Приблизить">+</button>
-        <button id="zoom-out" title="Отдалить">−</button>
-        <button id="zoom-reset" title="Сбросить масштаб" style="font-size:14px;">⟲</button>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" title="Приблизить">＋</button>
+        <button class="zoom-btn" id="zoom-out" title="Отдалить">−</button>
+        <button class="zoom-btn" id="zoom-reset" title="Сброс" style="font-size:14px;">⤢</button>
       </div>
     </div>
-    <div class="toolbar" id="tree-toolbar">
-      <div id="panel-toggle" title="Свернуть/развернуть панель">›</div>
+
+    <div class="toolbar-backdrop" id="toolbar-backdrop"></div>
+
+    <div class="toolbar" id="toolbar">
+      <div class="drawer-tab" id="drawer-tab" title="Открыть/закрыть панель">‹</div>
 
       <h3>Добавить узел</h3>
       <button class="btn primary" data-add="event">＋ Главное событие</button>
@@ -742,7 +672,7 @@
 
         <button class="btn warning" id="btn-connect">🔗 Добавить связь к…</button>
         <button class="btn danger" id="btn-delete">🗑 Удалить узел полностью</button>
-        <p class="hint">Двумя пальцами — масштаб и панорама. Тяните узел, чтобы переместить. Тяните от правой точки узла к другому, чтобы создать связь.</p>
+        <p class="hint">Тяните узел мышью или пальцем, чтобы переместить. Тяните от правой точки узла к другому узлу, чтобы создать связь. Крестик у связи — отвязать.</p>
       </div>
 
       <h3>Действия</h3>
@@ -753,14 +683,14 @@
     </div>
   </div>
 
-  <!-- ===== ТЕКСТ СЮЖЕТА ===== -->
+  <!-- ===== ТЕКСТ ===== -->
   <div class="pane" id="story-pane">
     <div class="story-toolbar">
-      <button class="btn primary" id="btn-make-node" disabled>＋ Создать узел из выделения</button>
+      <button class="btn primary" id="btn-make-node" disabled>＋ Узел из выделения</button>
       <button class="btn success" id="btn-link-to-node" disabled>🔗 Привязать к узлу</button>
-      <span class="selected-info" id="sel-info">Выделите текст для действий</span>
+      <span class="selected-info" id="sel-info">Выделите текст</span>
       <div class="spacer"></div>
-      <button class="btn" id="story-export">⬇ Экспорт JSON</button>
+      <button class="btn" id="story-export">⬇ JSON</button>
     </div>
     <div id="story-editor-wrap">
       <div id="story-editor" contenteditable="true"
@@ -768,7 +698,7 @@
     </div>
   </div>
 
-  <!-- ===== ОПИСАНИЯ УЗЛОВ ===== -->
+  <!-- ===== ОПИСАНИЯ ===== -->
   <div class="pane" id="desc-pane">
     <div class="desc-sidebar">
       <div class="desc-sidebar-title">Узлы дерева</div>
@@ -783,7 +713,7 @@
         <textarea id="desc-full-text" placeholder="Полное описание этого узла..."></textarea>
         <div class="desc-counter" id="desc-counter">0 символов</div>
         <div class="desc-preview-box">
-          <div class="dpb-label">Как это выглядит на карточке в дереве (до 20 символов, слова целиком):</div>
+          <div class="dpb-label">Как это выглядит на карточке (до 20 символов, слова целиком):</div>
           <div class="dpb-text" id="desc-preview">—</div>
         </div>
       </div>
@@ -801,14 +731,12 @@
   <button class="btn" id="sb-cancel">✕</button>
 </div>
 
+<!-- Модалка редактирования -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h3 id="modal-title">Редактировать узел</h3>
+    <h3>Редактировать узел</h3>
     <input type="hidden" id="modal-id">
-    <div class="field">
-      <label>Заголовок</label>
-      <input type="text" id="modal-input-title">
-    </div>
+    <div class="field"><label>Заголовок</label><input type="text" id="modal-input-title"></div>
     <div class="field">
       <label>Тип</label>
       <select id="modal-input-type">
@@ -817,10 +745,7 @@
         <option value="branch">Ветка</option>
       </select>
     </div>
-    <div class="field">
-      <label>Описание (кратко для дерева)</label>
-      <textarea id="modal-input-desc"></textarea>
-    </div>
+    <div class="field"><label>Описание (кратко)</label><textarea id="modal-input-desc"></textarea></div>
     <div class="modal-actions">
       <button class="btn" id="modal-cancel">Отмена</button>
       <button class="btn primary" id="modal-save">Сохранить</button>
@@ -828,21 +753,18 @@
   </div>
 </div>
 
+<!-- Модалка связи -->
 <div class="modal-overlay" id="link-modal">
   <div class="modal">
     <h3>Добавить связь</h3>
-    <p class="hint" style="margin-bottom:12px;">Выберите направление и узел.</p>
     <div class="field">
       <label>Направление</label>
       <select id="link-dir">
-        <option value="out">Исходящая (от выбранного узла → к другому)</option>
-        <option value="in">Входящая (от другого узла → к выбранному)</option>
+        <option value="out">Исходящая (от выбранного → к другому)</option>
+        <option value="in">Входящая (от другого → к выбранному)</option>
       </select>
     </div>
-    <div class="field">
-      <label>Узел</label>
-      <select id="link-target-select" size="8" style="height:auto;"></select>
-    </div>
+    <div class="field"><label>Узел</label><select id="link-target-select" size="8" style="height:auto;"></select></div>
     <div class="modal-actions">
       <button class="btn" id="link-cancel">Отмена</button>
       <button class="btn primary" id="link-ok">Связать</button>
@@ -850,13 +772,11 @@
   </div>
 </div>
 
+<!-- Модалка создания узла из выделения -->
 <div class="modal-overlay" id="make-node-modal">
   <div class="modal">
     <h3>Создать узел из выделенного текста</h3>
-    <div class="field">
-      <label>Заголовок</label>
-      <input type="text" id="mn-title">
-    </div>
+    <div class="field"><label>Заголовок</label><input type="text" id="mn-title"></div>
     <div class="field">
       <label>Тип</label>
       <select id="mn-type">
@@ -865,15 +785,10 @@
         <option value="branch">Ветка</option>
       </select>
     </div>
+    <div class="field"><label>Описание (из выделения)</label><textarea id="mn-desc"></textarea></div>
     <div class="field">
-      <label>Описание (из выделения)</label>
-      <textarea id="mn-desc"></textarea>
-    </div>
-    <div class="field">
-      <label>Привязать к существующему узлу (необязательно)</label>
-      <select id="mn-parent">
-        <option value="">— Не привязывать (корневой) —</option>
-      </select>
+      <label>Привязать к существующему узлу</label>
+      <select id="mn-parent"><option value="">— Не привязывать (корневой) —</option></select>
     </div>
     <div class="modal-actions">
       <button class="btn" id="mn-cancel">Отмена</button>
@@ -882,14 +797,11 @@
   </div>
 </div>
 
+<!-- Модалка привязки к узлу -->
 <div class="modal-overlay" id="link-to-node-modal">
   <div class="modal">
-    <h3>Привязать выделенный текст к узлу</h3>
-    <p class="hint" style="margin-bottom:12px;">Выделение станет дополнением к краткому описанию узла.</p>
-    <div class="field">
-      <label>Узел</label>
-      <select id="ltn-select" size="8" style="height:auto;"></select>
-    </div>
+    <h3>Привязать выделение к узлу</h3>
+    <div class="field"><label>Узел</label><select id="ltn-select" size="8" style="height:auto;"></select></div>
     <div class="modal-actions">
       <button class="btn" id="ltn-cancel">Отмена</button>
       <button class="btn primary" id="ltn-ok">Привязать</button>
@@ -899,23 +811,12 @@
 
 <script>
 /* ============================================================
-   ОПРЕДЕЛЕНИЕ МОБИЛЬНОГО УСТРОЙСТВА
-============================================================ */
-const isMobile = (() => {
-  const ua = /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent);
-  const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-  const narrow = window.innerWidth < 820;
-  return ua || coarse || narrow;
-})();
-if (isMobile) document.body.classList.add('mobile');
-
-/* ============================================================
    МОДЕЛЬ
 ============================================================ */
 let nodes = [];
 let edges = [];
 let selectedId = null;
-
+let descSelectedId = null;
 let savedSelectionText = '';
 let savedRange = null;
 
@@ -932,9 +833,9 @@ const sbText = document.getElementById('sb-text');
 const selInfo = document.getElementById('sel-info');
 const btnMake = document.getElementById('btn-make-node');
 const btnLink = document.getElementById('btn-link-to-node');
-const treeToolbar = document.getElementById('tree-toolbar');
-const panelToggle = document.getElementById('panel-toggle');
-
+const toolbar = document.getElementById('toolbar');
+const toolbarBackdrop = document.getElementById('toolbar-backdrop');
+const drawerTab = document.getElementById('drawer-tab');
 const descNodeList = document.getElementById('desc-node-list');
 const descHeader = document.getElementById('desc-header');
 const descBody = document.getElementById('desc-body');
@@ -942,8 +843,6 @@ const descEmpty = document.getElementById('desc-empty');
 const descFullText = document.getElementById('desc-full-text');
 const descCounter = document.getElementById('desc-counter');
 const descPreview = document.getElementById('desc-preview');
-
-let descSelectedId = null;
 
 const uid = () => 'n' + Date.now() + Math.random().toString(36).slice(2, 7);
 const getNode = id => nodes.find(n => n.id === id);
@@ -955,13 +854,186 @@ function setStatus(msg, timeout = 2500) {
   clearTimeout(setStatus._t);
   setStatus._t = setTimeout(() => statusEl.textContent = '', timeout);
 }
-
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 /* ============================================================
-   ОБРЕЗКА ДО 20 СИМВОЛОВ ПО ГРАНИЦЕ СЛОВА
+   ОПРЕДЕЛЕНИЕ МОБИЛЬНОГО РЕЖИМА
+============================================================ */
+function isMobile() {
+  return window.matchMedia('(max-width: 820px)').matches;
+}
+function applyMobileMode() {
+  document.body.classList.toggle('mobile', isMobile());
+  if (!isMobile()) {
+    // сбрасываем состояние ящика при переходе на ПК
+    toolbar.classList.remove('open');
+    toolbarBackdrop.classList.remove('show');
+    drawerTab.textContent = '‹';
+  } else {
+    // на мобиле ящик закрыт по умолчанию
+    if (!toolbar.classList.contains('open')) {
+      drawerTab.textContent = '‹';
+    }
+  }
+}
+window.addEventListener('resize', applyMobileMode);
+applyMobileMode();
+
+/* Открытие/закрытие правой панели на мобиле */
+drawerTab.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!isMobile()) return;
+  const isOpen = toolbar.classList.toggle('open');
+  toolbarBackdrop.classList.toggle('show', isOpen);
+  drawerTab.textContent = isOpen ? '›' : '‹';
+});
+toolbarBackdrop.addEventListener('click', () => {
+  toolbar.classList.remove('open');
+  toolbarBackdrop.classList.remove('show');
+  drawerTab.textContent = '‹';
+});
+
+/* ============================================================
+   ЗУМ И ПАН (трансформация viewport)
+============================================================ */
+let scale = 1;
+let panX = 0;
+let panY = 0;
+const MIN_SCALE = 0.25;
+const MAX_SCALE = 3;
+
+function applyTransform() {
+  treeViewport.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+
+function zoomAt(clientX, clientY, delta) {
+  const rect = treeCanvas.getBoundingClientRect();
+  const px = clientX - rect.left;
+  const py = clientY - rect.top;
+
+  const oldScale = scale;
+  let newScale = scale * delta;
+  newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+  if (newScale === oldScale) return;
+
+  // точка под курсором должна остаться на месте
+  panX = px - (px - panX) * (newScale / oldScale);
+  panY = py - (py - panY) * (newScale / oldScale);
+  scale = newScale;
+  applyTransform();
+}
+
+document.getElementById('zoom-in').addEventListener('click', () => {
+  const rect = treeCanvas.getBoundingClientRect();
+  zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, 1.2);
+});
+document.getElementById('zoom-out').addEventListener('click', () => {
+  const rect = treeCanvas.getBoundingClientRect();
+  zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, 1/1.2);
+});
+document.getElementById('zoom-reset').addEventListener('click', () => {
+  scale = 1; panX = 0; panY = 0; applyTransform();
+});
+
+/* Колесо мыши — зум (на ПК) */
+treeCanvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 1.1 : 1/1.1;
+  zoomAt(e.clientX, e.clientY, delta);
+}, { passive: false });
+
+/* ============================================================
+   ПАН и PINCH-ЗУМ пальцами
+============================================================ */
+let pointers = new Map();
+let isPanning = false;
+let panStart = null;
+let pinchStart = null;
+
+treeCanvas.addEventListener('pointerdown', (e) => {
+  // Клики по кнопкам зума и узлам не должны запускать пан
+  if (e.target.closest('.node') || e.target.closest('.zoom-controls')) return;
+  treeCanvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (pointers.size === 1) {
+    isPanning = true;
+    panStart = { x: e.clientX, y: e.clientY, panX, panY };
+  } else if (pointers.size === 2) {
+    isPanning = false;
+    const [p1, p2] = [...pointers.values()];
+    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    pinchStart = { dist, mid, scale, panX, panY };
+  }
+});
+
+treeCanvas.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (pointers.size === 1 && isPanning && panStart) {
+    panX = panStart.panX + (e.clientX - panStart.x);
+    panY = panStart.panY + (e.clientY - panStart.y);
+    applyTransform();
+  } else if (pointers.size === 2 && pinchStart) {
+    const [p1, p2] = [...pointers.values()];
+    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    const ratio = dist / pinchStart.dist;
+    let newScale = pinchStart.scale * ratio;
+    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+
+    // масштабируем относительно середины жеста
+    const rect = treeCanvas.getBoundingClientRect();
+    const px = mid.x - rect.left;
+    const py = mid.y - rect.top;
+    const px0 = pinchStart.mid.x - rect.left;
+    const py0 = pinchStart.mid.y - rect.top;
+
+    panX = px - (px0 - pinchStart.panX) * (newScale / pinchStart.scale);
+    panY = py - (py0 - pinchStart.panY) * (newScale / pinchStart.scale);
+    scale = newScale;
+    applyTransform();
+  }
+});
+
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (pointers.size === 0) {
+    isPanning = false;
+    panStart = null;
+    pinchStart = null;
+  } else if (pointers.size === 1) {
+    // остался один палец — переходим в режим пана
+    const [p] = [...pointers.values()];
+    isPanning = true;
+    panStart = { x: p.x, y: p.y, panX, panY };
+    pinchStart = null;
+  }
+}
+treeCanvas.addEventListener('pointerup', endPointer);
+treeCanvas.addEventListener('pointercancel', endPointer);
+
+/* ============================================================
+   ВКЛАДКИ
+============================================================ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.pane + '-pane').classList.add('active');
+
+    if (tab.dataset.pane === 'tree') renderEdges();
+    if (tab.dataset.pane === 'desc') renderDescSidebar();
+  });
+});
+
+/* ============================================================
+   ОБРЕЗКА ОПИСАНИЯ ПО СЛОВАМ
 ============================================================ */
 const DESC_MAX = 20;
 function truncateByWord(text) {
@@ -981,168 +1053,10 @@ function truncateByWord(text) {
 }
 
 /* ============================================================
-   ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
-============================================================ */
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(tab.dataset.pane + '-pane').classList.add('active');
-
-    if (tab.dataset.pane === 'tree') renderEdges();
-    if (tab.dataset.pane === 'desc') renderDescSidebar();
-  });
-});
-
-/* ============================================================
-   СВОРАЧИВАНИЕ ПРАВОЙ ПАНЕЛИ (мобилка)
-============================================================ */
-panelToggle.addEventListener('click', () => {
-  treeToolbar.classList.toggle('collapsed');
-  const collapsed = treeToolbar.classList.contains('collapsed');
-  panelToggle.textContent = collapsed ? '‹' : '›';
-  // после сворачивания/разворачивания пересчитываем связи
-  setTimeout(renderEdges, 250);
-});
-
-/* ============================================================
-   МАСШТАБ И ПАНОРАМА ПОЛЯ С УЗЛАМИ
-   — работают ВСЕГДА на ПК (колесо/жесты)
-   — работают пальцами на мобилке
-============================================================ */
-let view = { scale: 1, x: 0, y: 0 };
-const MIN_SCALE = 0.2;
-const MAX_SCALE = 3;
-
-function applyView() {
-  treeViewport.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
-}
-function resetView() {
-  view = { scale: 1, x: 0, y: 0 };
-  applyView();
-}
-resetView();
-
-function zoomAt(clientX, clientY, factor) {
-  const rect = treeCanvas.getBoundingClientRect();
-  const px = clientX - rect.left;
-  const py = clientY - rect.top;
-  const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, view.scale * factor));
-  const realFactor = newScale / view.scale;
-  // сохраняем точку под пальцем/курсором на месте
-  view.x = px - (px - view.x) * realFactor;
-  view.y = py - (py - view.y) * realFactor;
-  view.scale = newScale;
-  applyView();
-}
-
-/* --- Колесо мыши (ПК) --- */
-treeCanvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-  zoomAt(e.clientX, e.clientY, factor);
-}, { passive: false });
-
-/* --- Кнопки масштаба --- */
-document.getElementById('zoom-in').addEventListener('click', () => {
-  const r = treeCanvas.getBoundingClientRect();
-  zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.25);
-});
-document.getElementById('zoom-out').addEventListener('click', () => {
-  const r = treeCanvas.getBoundingClientRect();
-  zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / 1.25);
-});
-document.getElementById('zoom-reset').addEventListener('click', resetView);
-
-/* --- Точки касания (мультитач) --- */
-const pointers = new Map();          // pointerId -> {x, y, startX, startY, type}
-let pinchStart = null;               // {dist, scale, cx, cy, viewX, viewY}
-let panStart = null;                 // для панорамы одним/двумя пальцами
-let draggedNode = null;              // если тащим узел
-let draggedNodeStart = null;
-
-/* pointerdown по канвасу */
-treeCanvas.addEventListener('pointerdown', e => {
-  // если клик пришёл с узла или порта — обрабатывается их обработчиками
-  if (e.target.closest('.node')) return;
-  if (e.target.closest('#zoom-controls')) return;
-
-  treeCanvas.setPointerCapture(e.pointerId);
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-  if (pointers.size === 1) {
-    // начало панорамы
-    panStart = { x: e.clientX, y: e.clientY, viewX: view.x, viewY: view.y };
-  } else if (pointers.size === 2) {
-    // начало пинч-зума
-    const pts = [...pointers.values()];
-    const dx = pts[0].x - pts[1].x;
-    const dy = pts[0].y - pts[1].y;
-    const dist = Math.hypot(dx, dy);
-    const cx = (pts[0].x + pts[1].x) / 2;
-    const cy = (pts[0].y + pts[1].y) / 2;
-    pinchStart = {
-      dist,
-      scale: view.scale,
-      cx, cy,
-      viewX: view.x, viewY: view.y
-    };
-    panStart = null;
-  }
-});
-
-treeCanvas.addEventListener('pointermove', e => {
-  if (!pointers.has(e.pointerId)) return;
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-  if (pointers.size === 1 && panStart && !pinchStart) {
-    // панорама одним пальцем / ЛКМ
-    view.x = panStart.viewX + (e.clientX - panStart.x);
-    view.y = panStart.viewY + (e.clientY - panStart.y);
-    applyView();
-  } else if (pointers.size === 2 && pinchStart) {
-    // pinch-zoom
-    const pts = [...pointers.values()];
-    const dx = pts[0].x - pts[1].x;
-    const dy = pts[0].y - pts[1].y;
-    const dist = Math.hypot(dx, dy);
-    if (dist < 5) return;
-    const factor = dist / pinchStart.dist;
-    let newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStart.scale * factor));
-    const realFactor = newScale / pinchStart.scale;
-    const rect = treeCanvas.getBoundingClientRect();
-    const px = pinchStart.cx - rect.left;
-    const py = pinchStart.cy - rect.top;
-    view.x = px - (px - pinchStart.viewX) * realFactor;
-    view.y = py - (py - pinchStart.viewY) * realFactor;
-    view.scale = newScale;
-    applyView();
-  }
-});
-
-function endPointer(e) {
-  pointers.delete(e.pointerId);
-  if (pointers.size < 2) pinchStart = null;
-  if (pointers.size === 0) { panStart = null; }
-  else if (pointers.size === 1) {
-    // остался один палец — продолжаем панораму с текущей позиции
-    const p = [...pointers.values()][0];
-    panStart = { x: p.x, y: p.y, viewX: view.x, viewY: view.y };
-  }
-}
-treeCanvas.addEventListener('pointerup', endPointer);
-treeCanvas.addEventListener('pointercancel', endPointer);
-treeCanvas.addEventListener('pointerleave', e => {
-  if (!treeCanvas.hasPointerCapture?.(e.pointerId)) endPointer(e);
-});
-
-/* ============================================================
-   РЕНДЕР ДЕРЕВА
+   ДЕРЕВО
 ============================================================ */
 function renderTree() {
   [...treeInner.querySelectorAll('.node')].forEach(el => el.remove());
-
   nodes.forEach(n => {
     const el = document.createElement('div');
     el.className = 'node ' + n.type;
@@ -1150,9 +1064,7 @@ function renderTree() {
     el.style.left = n.x + 'px';
     el.style.top = n.y + 'px';
     if (n.id === selectedId) el.classList.add('selected');
-
     const shortDesc = truncateByWord(n.desc);
-
     el.innerHTML = `
       <span class="node-badge ${typeBadge[n.type]}">${typeLabel[n.type]}</span>
       <div class="node-title">${escapeHtml(n.title) || 'Без названия'}</div>
@@ -1161,45 +1073,40 @@ function renderTree() {
       <div class="port out" data-port="out" data-id="${n.id}"></div>
     `;
 
-    /* Перетаскивание узла — pointer-события (работают и мышь, и палец) */
-    el.addEventListener('pointerdown', e => {
-      if (e.target.classList.contains('port')) return; // порт сам обработает
+    // Перетаскивание узла — pointer events, работает и мышью, и пальцем
+    el.addEventListener('pointerdown', (e) => {
+      if (e.target.classList.contains('port')) return;
       e.stopPropagation();
-      el.setPointerCapture(e.pointerId);
       selectNode(n.id);
-      draggedNode = el;
-      draggedNodeStart = {
-        pointerX: e.clientX, pointerY: e.clientY,
-        nodeX: n.x, nodeY: n.y,
-        scale: view.scale
-      };
+      el.setPointerCapture(e.pointerId);
       el.classList.add('dragging');
-    });
 
-    el.addEventListener('pointermove', e => {
-      if (draggedNode !== el || !draggedNodeStart) return;
-      const dx = (e.clientX - draggedNodeStart.pointerX) / draggedNodeStart.scale;
-      const dy = (e.clientY - draggedNodeStart.pointerY) / draggedNodeStart.scale;
-      n.x = Math.max(0, draggedNodeStart.nodeX + dx);
-      n.y = Math.max(0, draggedNodeStart.nodeY + dy);
-      el.style.left = n.x + 'px';
-      el.style.top = n.y + 'px';
-      renderEdges();
-    });
+      const startClientX = e.clientX, startClientY = e.clientY;
+      const origX = n.x, origY = n.y;
 
-    const endDrag = () => {
-      if (draggedNode === el) {
+      const onMove = (ev) => {
+        // делим на scale, т.к. узел внутри трансформированного viewport
+        const dx = (ev.clientX - startClientX) / scale;
+        const dy = (ev.clientY - startClientY) / scale;
+        n.x = Math.max(0, origX + dx);
+        n.y = Math.max(0, origY + dy);
+        el.style.left = n.x + 'px';
+        el.style.top = n.y + 'px';
+        renderEdges();
+      };
+      const onUp = () => {
         el.classList.remove('dragging');
-        draggedNode = null;
-        draggedNodeStart = null;
-      }
-    };
-    el.addEventListener('pointerup', endDrag);
-    el.addEventListener('pointercancel', endDrag);
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup', onUp);
+        el.removeEventListener('pointercancel', onUp);
+      };
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onUp);
+    });
 
-    /* Порт "out" — начало связи */
     const outPort = el.querySelector('.port.out');
-    outPort.addEventListener('pointerdown', e => {
+    outPort.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       e.preventDefault();
       startLinkDrag(n.id, e);
@@ -1207,13 +1114,19 @@ function renderTree() {
 
     treeInner.appendChild(el);
   });
-
   renderEdges();
 }
 
-/* ============================================================
-   СВЯЗИ
-============================================================ */
+/* Конвертация клиентских координат в координаты tree-inner (с учётом scale/pan) */
+function clientToInner(clientX, clientY) {
+  const rect = treeInner.getBoundingClientRect();
+  // rect уже учитывает transform, поэтому делим на scale
+  return {
+    x: (clientX - rect.left) / scale,
+    y: (clientY - rect.top) / scale
+  };
+}
+
 function renderEdges() {
   svg.innerHTML = `
     <defs>
@@ -1234,19 +1147,22 @@ function renderEdges() {
     const tx = parseFloat(toEl.style.left);
     const ty = parseFloat(toEl.style.top) + toEl.offsetHeight / 2;
 
-    const dx = Math.max(40, Math.abs(tx - fx) * 0.5);
+    // БЕЗ ОГРАНИЧЕНИЯ ДЛИНЫ — просто красивая кривая, зависящая от расстояния
+    const dx = Math.abs(tx - fx) * 0.5;
+    const d = `M ${fx} ${fy} C ${fx + dx} ${fy}, ${tx - dx} ${ty}, ${tx} ${ty}`;
+
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
     const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    hit.setAttribute('d', `M ${fx} ${fy} C ${fx + dx} ${fy}, ${tx - dx} ${ty}, ${tx} ${ty}`);
+    hit.setAttribute('d', d);
     hit.setAttribute('stroke', 'transparent');
-    hit.setAttribute('stroke-width', '24');
+    hit.setAttribute('stroke-width', '18');
     hit.setAttribute('fill', 'none');
     hit.style.pointerEvents = 'stroke';
     hit.style.cursor = 'pointer';
 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', `M ${fx} ${fy} C ${fx + dx} ${fy}, ${tx - dx} ${ty}, ${tx} ${ty}`);
+    path.setAttribute('d', d);
     path.setAttribute('stroke', '#89b4fa');
     path.setAttribute('stroke-width', '2.5');
     path.setAttribute('fill', 'none');
@@ -1257,33 +1173,29 @@ function renderEdges() {
     const mx = (fx + tx) / 2;
     const my = (fy + ty) / 2;
     const cx = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    cx.setAttribute('cx', mx);
-    cx.setAttribute('cy', my);
-    cx.setAttribute('r', '11');
+    cx.setAttribute('cx', mx); cx.setAttribute('cy', my);
+    cx.setAttribute('r', '9');
     cx.setAttribute('fill', '#f38ba8');
     cx.setAttribute('stroke', '#1e1e2e');
     cx.setAttribute('stroke-width', '2');
     cx.style.pointerEvents = 'all';
     cx.style.cursor = 'pointer';
-    cx.style.opacity = isMobile ? '1' : '0';
+    cx.style.opacity = '0';
     cx.style.transition = 'opacity 0.15s';
 
     const xtext = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    xtext.setAttribute('x', mx);
-    xtext.setAttribute('y', my + 4);
+    xtext.setAttribute('x', mx); xtext.setAttribute('y', my + 4);
     xtext.setAttribute('text-anchor', 'middle');
-    xtext.setAttribute('font-size', '13');
+    xtext.setAttribute('font-size', '12');
     xtext.setAttribute('font-weight', '700');
     xtext.setAttribute('fill', '#1e1e2e');
     xtext.textContent = '×';
     xtext.style.pointerEvents = 'none';
-    xtext.style.opacity = isMobile ? '1' : '0';
+    xtext.style.opacity = '0';
     xtext.style.transition = 'opacity 0.15s';
 
-    if (!isMobile) {
-      g.addEventListener('mouseenter', () => { cx.style.opacity = '1'; xtext.style.opacity = '1'; });
-      g.addEventListener('mouseleave', () => { cx.style.opacity = '0'; xtext.style.opacity = '0'; });
-    }
+    g.addEventListener('mouseenter', () => { cx.style.opacity = '1'; xtext.style.opacity = '1'; });
+    g.addEventListener('mouseleave', () => { cx.style.opacity = '0'; xtext.style.opacity = '0'; });
 
     const removeEdge = (ev) => {
       ev.stopPropagation();
@@ -1295,14 +1207,12 @@ function renderEdges() {
     hit.addEventListener('click', removeEdge);
     cx.addEventListener('click', removeEdge);
 
-    g.appendChild(hit);
-    g.appendChild(path);
-    g.appendChild(cx);
-    g.appendChild(xtext);
+    g.appendChild(hit); g.appendChild(path); g.appendChild(cx); g.appendChild(xtext);
     svg.appendChild(g);
   });
 }
 
+/* Создание связи перетаскиванием порта — без ограничения длины */
 function startLinkDrag(fromId, e) {
   const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   tempPath.setAttribute('stroke', '#f9e2af');
@@ -1315,22 +1225,21 @@ function startLinkDrag(fromId, e) {
   const fx = parseFloat(fromEl.style.left) + fromEl.offsetWidth;
   const fy = parseFloat(fromEl.style.top) + fromEl.offsetHeight / 2;
 
-  const updateLine = (clientX, clientY) => {
-    const rect = treeInner.getBoundingClientRect();
-    const mx = (clientX - rect.left) / view.scale;
-    const my = (clientY - rect.top) / view.scale;
-    const dx = Math.max(40, Math.abs(mx - fx) * 0.5);
-    tempPath.setAttribute('d', `M ${fx} ${fy} C ${fx + dx} ${fy}, ${mx - dx} ${my}, ${mx} ${my}`);
+  const onMove = (ev) => {
+    const p = clientToInner(ev.clientX, ev.clientY);
+    const dx = Math.abs(p.x - fx) * 0.5;
+    tempPath.setAttribute('d', `M ${fx} ${fy} C ${fx + dx} ${fy}, ${p.x - dx} ${p.y}, ${p.x} ${p.y}`);
   };
 
-  const onMove = ev => updateLine(ev.clientX, ev.clientY);
-
-  const onUp = ev => {
+  const onUp = (ev) => {
     document.removeEventListener('pointermove', onMove);
     document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', onUp);
     tempPath.remove();
 
-    const target = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.node');
+    // Найти узел под пальцем/курсором
+    const targetEl = document.elementFromPoint(ev.clientX, ev.clientY);
+    const target = targetEl?.closest('.node');
     if (target && target.dataset.id !== fromId) {
       const toId = target.dataset.id;
       if (!edges.some(ed => ed.from === fromId && ed.to === toId)) {
@@ -1347,9 +1256,6 @@ function startLinkDrag(fromId, e) {
   document.addEventListener('pointercancel', onUp);
 }
 
-/* ============================================================
-   ВЫБОР УЗЛА / РЕДАКТОР
-============================================================ */
 function selectNode(id) {
   selectedId = id;
   document.querySelectorAll('.node').forEach(el => {
@@ -1367,12 +1273,6 @@ function selectNode(id) {
   document.getElementById('edit-type').value = n.type;
   document.getElementById('edit-desc').value = n.desc;
   renderEditorLinks();
-
-  // на мобилке: если панель свёрнута — развернуть, чтобы увидеть редактор
-  if (isMobile && treeToolbar.classList.contains('collapsed')) {
-    treeToolbar.classList.remove('collapsed');
-    panelToggle.textContent = '›';
-  }
 }
 
 function renderEditorLinks() {
@@ -1424,25 +1324,17 @@ function renderEditorLinks() {
 
 document.getElementById('edit-title').addEventListener('input', e => {
   const n = getNode(selectedId); if (!n) return;
-  n.title = e.target.value;
-  updateNodeVisual(n);
-  renderDescSidebar();
+  n.title = e.target.value; updateNodeVisual(n); renderDescSidebar();
 });
 document.getElementById('edit-type').addEventListener('change', e => {
   const n = getNode(selectedId); if (!n) return;
-  n.type = e.target.value;
-  updateNodeVisual(n);
-  renderDescSidebar();
+  n.type = e.target.value; updateNodeVisual(n); renderDescSidebar();
 });
 document.getElementById('edit-desc').addEventListener('input', e => {
   const n = getNode(selectedId); if (!n) return;
-  n.desc = e.target.value;
-  updateNodeVisual(n);
-  renderDescSidebar();
+  n.desc = e.target.value; updateNodeVisual(n); renderDescSidebar();
   if (descSelectedId === n.id) {
-    descFullText.value = n.desc;
-    updateDescCounter();
-    updateDescPreview();
+    descFullText.value = n.desc; updateDescCounter(); updateDescPreview();
   }
 });
 
@@ -1460,14 +1352,17 @@ function updateNodeVisual(n) {
 document.querySelectorAll('[data-add]').forEach(btn => {
   btn.addEventListener('click', () => {
     const type = btn.dataset.add;
-    const x = 60 + Math.random() * 400;
-    const y = 60 + Math.random() * 400;
+    // добавляем в центр видимой области
+    const rect = treeCanvas.getBoundingClientRect();
+    const cx = (rect.width / 2 - panX) / scale - 100;
+    const cy = (rect.height / 2 - panY) / scale - 50;
     const id = uid();
-    nodes.push({ id, title: 'Новый узел', type, desc: '', x, y });
+    nodes.push({ id, title: 'Новый узел', type, desc: '', x: Math.max(0, cx), y: Math.max(0, cy) });
     renderTree();
     selectNode(id);
     renderDescSidebar();
     setStatus('Узел добавлен');
+    if (isMobile()) { toolbar.classList.remove('open'); toolbarBackdrop.classList.remove('show'); drawerTab.textContent = '‹'; }
   });
 });
 
@@ -1538,11 +1433,8 @@ document.getElementById('btn-load').addEventListener('click', () => {
     const data = JSON.parse(raw);
     nodes = data.nodes || [];
     edges = data.edges || [];
-    selectedId = null;
-    descSelectedId = null;
-    renderTree();
-    selectNode(null);
-    renderDescSidebar();
+    selectedId = null; descSelectedId = null;
+    renderTree(); selectNode(null); renderDescSidebar();
     descHeader.style.display = 'none';
     descBody.style.display = 'none';
     descEmpty.style.display = 'flex';
@@ -1560,12 +1452,12 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 });
 
 /* ============================================================
-   ОПИСАНИЯ УЗЛОВ
+   ОПИСАНИЯ
 ============================================================ */
 function renderDescSidebar() {
   descNodeList.innerHTML = '';
   if (nodes.length === 0) {
-    descNodeList.innerHTML = '<div class="desc-sidebar-empty">Нет узлов. Добавьте их на вкладке «Дерево сюжета».</div>';
+    descNodeList.innerHTML = '<div class="desc-sidebar-empty">Нет узлов. Добавьте их на вкладке «Дерево».</div>';
     return;
   }
   nodes.forEach(n => {
@@ -1598,9 +1490,7 @@ function openDescEditor(id) {
   updateDescPreview();
   document.querySelectorAll('.desc-node-item').forEach(el => el.classList.remove('active'));
   const idx = nodes.findIndex(nn => nn.id === id);
-  if (idx >= 0 && descNodeList.children[idx]) {
-    descNodeList.children[idx].classList.add('active');
-  }
+  if (idx >= 0 && descNodeList.children[idx]) descNodeList.children[idx].classList.add('active');
 }
 
 function updateDescCounter() {
@@ -1615,12 +1505,10 @@ function plural(n, forms) {
   if (b === 1) return forms[0];
   return forms[2];
 }
-
 function updateDescPreview() {
   const short = truncateByWord(descFullText.value);
   descPreview.textContent = short || '— пусто —';
 }
-
 descFullText.addEventListener('input', () => {
   if (!descSelectedId) return;
   const n = getNode(descSelectedId);
@@ -1633,9 +1521,7 @@ descFullText.addEventListener('input', () => {
     const shortDesc = truncateByWord(n.desc);
     el.querySelector('.node-desc').innerHTML = escapeHtml(shortDesc) || '<i>без описания</i>';
   }
-  if (selectedId === n.id) {
-    document.getElementById('edit-desc').value = n.desc;
-  }
+  if (selectedId === n.id) document.getElementById('edit-desc').value = n.desc;
   const idx = nodes.findIndex(nn => nn.id === n.id);
   if (idx >= 0 && descNodeList.children[idx]) {
     const prev = truncateByWord(n.desc) || '— без описания —';
@@ -1644,13 +1530,12 @@ descFullText.addEventListener('input', () => {
 });
 
 /* ============================================================
-   ТЕКСТ СЮЖЕТА — РАБОТА С ВЫДЕЛЕНИЕМ
+   ТЕКСТ СЮЖЕТА
 ============================================================ */
 (function restoreStoryText() {
   const saved = localStorage.getItem('storyText');
   if (saved) storyEditor.innerText = saved;
 })();
-
 storyEditor.addEventListener('input', () => {
   localStorage.setItem('storyText', storyEditor.innerText);
 });
@@ -1660,28 +1545,18 @@ function captureSelection() {
   if (!sel || sel.rangeCount === 0) return;
   const range = sel.getRangeAt(0);
   if (!storyEditor.contains(range.commonAncestorContainer)) return;
-
   if (sel.isCollapsed) {
-    savedSelectionText = '';
-    savedRange = null;
-    updateSelectionUI();
-    return;
+    savedSelectionText = ''; savedRange = null; updateSelectionUI(); return;
   }
   const text = sel.toString().trim();
-  if (!text) {
-    savedSelectionText = '';
-    savedRange = null;
-    updateSelectionUI();
-    return;
-  }
+  if (!text) { savedSelectionText = ''; savedRange = null; updateSelectionUI(); return; }
   savedSelectionText = text;
   savedRange = range.cloneRange();
   updateSelectionUI();
 }
-
 storyEditor.addEventListener('mouseup', () => setTimeout(captureSelection, 10));
+storyEditor.addEventListener('touchend', () => setTimeout(captureSelection, 30));
 storyEditor.addEventListener('keyup', () => setTimeout(captureSelection, 10));
-storyEditor.addEventListener('touchend', () => setTimeout(captureSelection, 50));
 
 document.addEventListener('selectionchange', () => {
   if (document.querySelector('.modal-overlay.active')) return;
@@ -1689,13 +1564,9 @@ document.addEventListener('selectionchange', () => {
   if (!sel || sel.rangeCount === 0) return;
   const range = sel.getRangeAt(0);
   if (!storyEditor.contains(range.commonAncestorContainer)) return;
-
   if (sel.isCollapsed) {
     if (document.activeElement !== storyEditor) return;
-    savedSelectionText = '';
-    savedRange = null;
-    updateSelectionUI();
-    return;
+    savedSelectionText = ''; savedRange = null; updateSelectionUI(); return;
   }
   const text = sel.toString().trim();
   if (text) {
@@ -1714,24 +1585,18 @@ function updateSelectionUI() {
   } else {
     btnMake.disabled = true;
     btnLink.disabled = true;
-    selInfo.textContent = 'Выделите текст для действий';
+    selInfo.textContent = 'Выделите текст';
     hideBanner();
   }
 }
-
 function showBanner(text) {
   sbText.textContent = text.length > 60 ? text.slice(0, 60) + '…' : text;
   banner.classList.add('show');
 }
-function hideBanner() {
-  banner.classList.remove('show');
-}
-
+function hideBanner() { banner.classList.remove('show'); }
 document.getElementById('sb-cancel').addEventListener('click', () => clearSelection());
-
 function clearSelection() {
-  savedSelectionText = '';
-  savedRange = null;
+  savedSelectionText = ''; savedRange = null;
   window.getSelection().removeAllRanges();
   updateSelectionUI();
 }
@@ -1750,10 +1615,8 @@ function openMakeNodeModal() {
   });
   document.getElementById('make-node-modal').classList.add('active');
 }
-
 document.getElementById('btn-make-node').addEventListener('click', openMakeNodeModal);
 document.getElementById('sb-make').addEventListener('click', openMakeNodeModal);
-
 document.getElementById('mn-cancel').addEventListener('click', () => {
   document.getElementById('make-node-modal').classList.remove('active');
 });
@@ -1762,7 +1625,6 @@ document.getElementById('mn-save').addEventListener('click', () => {
   const type = document.getElementById('mn-type').value;
   const desc = document.getElementById('mn-desc').value;
   const parentId = document.getElementById('mn-parent').value;
-
   const id = uid();
   let x, y;
   if (parentId) {
@@ -1770,18 +1632,15 @@ document.getElementById('mn-save').addEventListener('click', () => {
     x = parent.x + 260;
     y = parent.y + 120 + Math.random() * 80;
   } else {
-    x = 80 + Math.random() * 400;
-    y = 80 + Math.random() * 400;
+    const rect = treeCanvas.getBoundingClientRect();
+    x = Math.max(0, (rect.width / 2 - panX) / scale - 100);
+    y = Math.max(0, (rect.height / 2 - panY) / scale - 50);
   }
-
   nodes.push({ id, title, type, desc, x, y });
   if (parentId) edges.push({ from: parentId, to: id });
-
   document.getElementById('make-node-modal').classList.remove('active');
   clearSelection();
-  renderTree();
-  selectNode(id);
-  renderDescSidebar();
+  renderTree(); selectNode(id); renderDescSidebar();
   setStatus('Узел создан из выделения');
 });
 
@@ -1798,10 +1657,8 @@ function openLinkToNodeModal() {
   });
   document.getElementById('link-to-node-modal').classList.add('active');
 }
-
 document.getElementById('btn-link-to-node').addEventListener('click', openLinkToNodeModal);
 document.getElementById('sb-link').addEventListener('click', openLinkToNodeModal);
-
 document.getElementById('ltn-cancel').addEventListener('click', () => {
   document.getElementById('link-to-node-modal').classList.remove('active');
 });
@@ -1815,25 +1672,18 @@ document.getElementById('ltn-ok').addEventListener('click', () => {
   renderTree();
   if (selectedId === id) selectNode(id);
   if (descSelectedId === id) {
-    descFullText.value = n.desc;
-    updateDescCounter();
-    updateDescPreview();
+    descFullText.value = n.desc; updateDescCounter(); updateDescPreview();
   }
   renderDescSidebar();
   setStatus('Выделение привязано к описанию узла');
 });
 
 document.getElementById('story-export').addEventListener('click', () => {
-  const data = JSON.stringify({
-    nodes, edges,
-    storyText: storyEditor.innerText
-  }, null, 2);
+  const data = JSON.stringify({ nodes, edges, storyText: storyEditor.innerText }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'plot-tree.json';
-  a.click();
+  a.href = url; a.download = 'plot-tree.json'; a.click();
   URL.revokeObjectURL(url);
   setStatus('Экспортировано');
 });
@@ -1854,24 +1704,19 @@ window.addEventListener('resize', renderEdges);
   }
   if (nodes.length === 0) {
     const startId = uid();
-    nodes.push({
-      id: startId, title: 'Начало истории', type: 'event',
-      desc: 'Герой просыпается в незнакомом месте.', x: 80, y: 200
-    });
+    nodes.push({ id: startId, title: 'Начало истории', type: 'event',
+      desc: 'Герой просыпается в незнакомом месте.', x: 80, y: 200 });
     const c1 = uid();
-    nodes.push({
-      id: c1, title: 'Пойти налево', type: 'choice',
-      desc: 'Выбор пути.', x: 380, y: 80
-    });
+    nodes.push({ id: c1, title: 'Пойти налево', type: 'choice',
+      desc: 'Выбор пути.', x: 380, y: 80 });
     const c2 = uid();
-    nodes.push({
-      id: c2, title: 'Пойти направо', type: 'choice',
-      desc: 'Выбор пути.', x: 380, y: 320
-    });
+    nodes.push({ id: c2, title: 'Пойти направо', type: 'choice',
+      desc: 'Выбор пути.', x: 380, y: 320 });
     edges.push({ from: startId, to: c1 }, { from: startId, to: c2 });
   }
   renderTree();
   renderDescSidebar();
+  applyTransform();
 })();
 </script>
 </body>
