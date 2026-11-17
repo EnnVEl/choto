@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Редактор дерева сюжета</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .tabs {
+    display: flex;
+    background: #181825;
+    border-bottom: 2px solid #313244;
+    flex-shrink: 0;
+  }
+  .tab {
+    padding: 14px 28px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #7f849c;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .tab:hover { background: #1e1e2e; color: #cdd6f4; }
+  .tab.active {
+    color: #89b4fa;
+    border-bottom-color: #89b4fa;
+    background: #1e1e2e;
+  }
+
+  .content { flex: 1; overflow: hidden; position: relative; }
+  .pane { position: absolute; inset: 0; display: none; }
+  .pane.active { display: flex; }
+
+  #tree-pane { flex-direction: row; }
+
+  #tree-canvas {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    background:
+      linear-gradient(90deg, rgba(137,180,250,0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+      linear-gradient(rgba(137,180,250,0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+      #1e1e2e;
+  }
+
+  #tree-inner {
+    position: relative;
+    min-width: 3000px;
+    min-height: 2000px;
+    padding: 40px;
+  }
+
+  svg#edges {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  .node {
+    position: absolute;
+    min-width: 180px;
+    max-width: 260px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #313244;
+    border: 2px solid #45475a;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    z-index: 2;
+  }
+  .node:hover { border-color: #89b4fa; box-shadow: 0 0 0 2px rgba(137,180,250,0.3); }
+  .node.selected { border-color: #f9e2af; box-shadow: 0 0 0 3px rgba(249,226,175,0.35); }
+  .node.dragging { cursor: grabbing; z-index: 10; }
+
+  .node.event { border-left: 5px solid #89b4fa; }
+  .node.choice { border-left: 5px solid #a6e3a1; }
+  .node.branch { border-left: 5px solid #f9e2af; }
+
+  .node-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #f5e0dc;
+    word-wrap: break-word;
+  }
+  .node-desc {
+    font-size: 11.5px;
+    color: #a6adc8;
+    line-height: 1.35;
+    word-wrap: break-word;
+    max-height: 60px;
+    overflow: hidden;
+  }
+  .node-badge {
+    display: inline-block;
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .badge-event { background: #1e3a5f; color: #89b4fa; }
+  .badge-choice { background: #1e3f24; color: #a6e3a1; }
+  .badge-branch { background: #4a3f1e; color: #f9e2af; }
+
+  .port {
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #45475a;
+    border: 2px solid #1e1e2e;
+    cursor: crosshair;
+    z-index: 3;
+  }
+  .port:hover { background: #89b4fa; transform: scale(1.2); }
+  .port.out { right: -8px; top: 50%; transform: translateY(-50%); }
+  .port.out:hover { transform: translateY(-50%) scale(1.2); }
+  .port.in { left: -8px; top: 50%; transform: translateY(-50%); }
+
+  .toolbar {
+    width: 280px;
+    background: #181825;
+    border-left: 2px solid #313244;
+    padding: 18px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .toolbar h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #7f849c;
+    margin-bottom: 10px;
+    margin-top: 18px;
+  }
+  .toolbar h3:first-child { margin-top: 0; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: none;
+    border-radius: 8px;
+    background: #313244;
+    color: #cdd6f4;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, transform 0.05s;
+  }
+  .btn:hover { background: #45475a; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: #89b4fa; color: #1e1e2e; }
+  .btn.primary:hover:not(:disabled) { background: #a5c8ff; }
+  .btn.danger { background: #f38ba8; color: #1e1e2e; }
+  .btn.danger:hover { background: #ff9eb5; }
+  .btn.success { background: #a6e3a1; color: #1e1e2e; }
+  .btn.success:hover:not(:disabled) { background: #b8f0b3; }
+  .btn.warning { background: #f9e2af; color: #1e1e2e; }
+  .btn.warning:hover { background: #ffe9b8; }
+
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-size: 11.5px;
+    color: #7f849c;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    border-color: #89b4fa;
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+
+  .hint {
+    font-size: 11px;
+    color: #6c7086;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+  .empty-msg {
+    font-size: 12px;
+    color: #6c7086;
+    text-align: center;
+    padding: 20px 0;
+    font-style: italic;
+  }
+
+  .link-list {
+    list-style: none;
+    margin-bottom: 10px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .link-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #1e1e2e;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .link-item .link-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .link-item .link-text b { color: #89b4fa; }
+  .link-item button {
+    background: #f38ba8;
+    color: #1e1e2e;
+    border: none;
+    border-radius: 4px;
+    width: 22px; height: 22px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .link-item button:hover { background: #ff9eb5; }
+  .link-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #7f849c;
+    margin: 10px 0 6px;
+  }
+
+  #story-pane {
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .story-toolbar {
+    padding: 10px 20px;
+    background: #181825;
+    border-bottom: 2px solid #313244;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .story-toolbar .btn { width: auto; margin: 0; padding: 8px 14px; font-size: 13px; }
+  .story-toolbar .spacer { flex: 1; }
+  .story-toolbar .selected-info {
+    font-size: 12px;
+    color: #7f849c;
+    padding: 0 8px;
+  }
+  .story-toolbar .selected-info b { color: #f9e2af; }
+
+  #story-editor-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px 20px;
+    display: flex;
+    justify-content: center;
+  }
+  #story-editor {
+    width: 100%;
+    max-width: 850px;
+    min-height: 100%;
+    background: #313244;
+    border-radius: 12px;
+    padding: 30px 36px;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #cdd6f4;
+    font-family: 'Segoe UI', Georgia, serif;
+    outline: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  #story-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #6c7086;
+    font-style: italic;
+    pointer-events: none;
+  }
+  #story-editor ::selection,
+  #story-editor::selection {
+    background: #f9e2af;
+    color: #1e1e2e;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #313244;
+    padding: 24px;
+    border-radius: 12px;
+    width: 460px;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  }
+  .modal h3 { margin-bottom: 16px; color: #f5e0dc; }
+  .modal .field textarea { min-height: 100px; }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .modal-actions .btn { flex: 1; margin: 0; text-align: center; }
+
+  #selection-banner {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(200%);
+    background: #313244;
+    border: 2px solid #f9e2af;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    transition: transform 0.25s ease;
+    z-index: 500;
+    max-width: 90vw;
+  }
+  #selection-banner.show { transform: translateX(-50%) translateY(0); }
+  #selection-banner .sb-text {
+    font-size: 12px;
+    color: #f9e2af;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #selection-banner .btn {
+    width: auto;
+    margin: 0;
+    padding: 7px 12px;
+    font-size: 12.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" data-pane="tree">🌳 Дерево сюжета</div>
+  <div class="tab" data-pane="story">📖 Текст сюжета</div>
+</div>
+
+<div class="content">
+  <div class="pane active" id="tree-pane">
+    <div id="tree-canvas">
+      <div id="tree-inner">
+        <svg id="edges"></svg>
+      </div>
+    </div>
+    <div class="toolbar">
+      <h3>Добавить узел</h3>
+      <button class="btn primary" data-add="event">＋ Главное событие</button>
+      <button class="btn success" data-add="choice">＋ Выбор / разветвление</button>
+      <button class="btn" data-add="branch">＋ Ветка</button>
+
+      <h3>Выбранный узел</h3>
+      <div id="editor-empty" class="empty-msg">Узел не выбран</div>
+      <div id="editor" style="display:none;">
+        <div class="field">
+          <label>Заголовок</label>
+          <input type="text" id="edit-title">
+        </div>
+        <div class="field">
+          <label>Тип</label>
+          <select id="edit-type">
+            <option value="event">Главное событие</option>
+            <option value="choice">Выбор / разветвление</option>
+            <option value="branch">Ветка</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Описание</label>
+          <textarea id="edit-desc"></textarea>
+        </div>
+
+        <div class="link-section-title">Входящие связи (откуда)</div>
+        <ul class="link-list" id="incoming-list"></ul>
+
+        <div class="link-section-title">Исходящие связи (куда)</div>
+        <ul class="link-list" id="outgoing-list"></ul>
+
+        <button class="btn warning" id="btn-connect">🔗 Добавить связь к…</button>
+        <button class="btn danger" id="btn-delete">🗑 Удалить узел полностью</button>
+        <p class="hint">Тяните узел мышью, чтобы переместить. Тяните от правой точки узла к другому узлу, чтобы создать связь. Крестик у связи — отвязать.</p>
+      </div>
+
+      <h3>Действия</h3>
+      <button class="btn" id="btn-save">💾 Сохранить в браузере</button>
+      <button class="btn" id="btn-load">📂 Загрузить</button>
+      <button class="btn danger" id="btn-clear">🗑 Очистить всё</button>
+      <p class="hint" id="status"></p>
+    </div>
+  </div>
+
+  <div class="pane" id="story-pane">
+    <div class="story-toolbar">
+      <button class="btn primary" id="btn-make-node" disabled>＋ Создать узел из выделения</button>
+      <button class="btn success" id="btn-link-to-node" disabled>🔗 Привязать к узлу</button>
+      <span class="selected-info" id="sel-info">Выделите текст для действий</span>
+      <div class="spacer"></div>
+      <button class="btn" id="story-export">⬇ Экспорт JSON</button>
+    </div>
+    <div id="story-editor-wrap">
+      <div id="story-editor" contenteditable="true"
+        data-placeholder="Пишите здесь сюжет... Выделяйте фрагменты текста, чтобы превратить их в узлы дерева или привязать к существующим."></div>
+    </div>
+  </div>
+</div>
+
+<div id="selection-banner">
+  <span class="sb-text" id="sb-text"></span>
+  <button class="btn primary" id="sb-make">＋ Узел</button>
+  <button class="btn success" id="sb-link">🔗 Привязать</button>
+  <button class="btn" id="sb-cancel">✕</button>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Редактировать узел</h3>
+    <input type="hidden" id="modal-id">
+    <div class="field">
+      <label>Заголовок</label>
+      <input type="text" id="modal-input-title">
+    </div>
+    <div class="field">
+      <label>Тип</label>
+      <select id="modal-input-type">
+        <option value="event">Главное событие</option>
+        <option value="choice">Выбор / разветвление</option>
+        <option value="branch">Ветка</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Описание</label>
+      <textarea id="modal-input-desc"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="modal-cancel">Отмена</button>
+      <button class="btn primary" id="modal-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="link-modal">
+  <div class="modal">
+    <h3>Добавить связь</h3>
+    <p class="hint" style="margin-bottom:12px;">Выберите направление и узел.</p>
+    <div class="field">
+      <label>Направление</label>
+      <select id="link-dir">
+        <option value="out">Исходящая (от выбранного узла → к другому)</option>
+        <option value="in">Входящая (от другого узла → к выбранному)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Узел</label>
+      <select id="link-target-select" size="8" style="height:auto;"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="link-cancel">Отмена</button>
+      <button class="btn primary" id="link-ok">Связать</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="make-node-modal">
+  <div class="modal">
+    <h3>Создать узел из выделенного текста</h3>
+    <div class="field">
+      <label>Заголовок</label>
+      <input type="text" id="mn-title">
+    </div>
+    <div class="field">
+      <label>Тип</label>
+      <select id="mn-type">
+        <option value="event">Главное событие</option>
+        <option value="choice">Выбор / разветвление</option>
+        <option value="branch">Ветка</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Описание (из выделения)</label>
+      <textarea id="mn-desc"></textarea>
+    </div>
+    <div class="field">
+      <label>Привязать к существующему узлу (необязательно)</label>
+      <select id="mn-parent">
+        <option value="">— Не привязывать (корневой) —</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="mn-cancel">Отмена</button>
+      <button class="btn primary" id="mn-save">Создать</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="link-to-node-modal">
+  <div class="modal">
+    <h3>Привязать выделенный текст к узлу</h3>
+    <p class="hint" style="margin-bottom:12px;">Выделение станет дополнением к описанию выбранного узла.</p>
+    <div class="field">
+      <label>Узел</label>
+      <select id="ltn-select" size="8" style="height:auto;"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="ltn-cancel">Отмена</button>
+      <button class="btn primary" id="ltn-ok">Привязать</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   МОДЕЛЬ
+============================================================ */
+let nodes = [];
+let edges = [];
+let selectedId = null;
+
+/* ВАЖНО: сохраняем выделение в переменной, чтобы оно
+   не терялось при клике по кнопкам тулбара / модалки */
+let savedSelectionText = '';
+let savedRange = null;
+
+const treeInner = document.getElementById('tree-inner');
+const svg = document.getElementById('edges');
+const editor = document.getElementById('editor');
+const editorEmpty = document.getElementById('editor-empty');
+const statusEl = document.getElementById('status');
+const storyEditor = document.getElementById('story-editor');
+const banner = document.getElementById('selection-banner');
+const sbText = document.getElementById('sb-text');
+const selInfo = document.getElementById('sel-info');
+const btnMake = document.getElementById('btn-make-node');
+const btnLink = document.getElementById('btn-link-to-node');
+
+const uid = () => 'n' + Date.now() + Math.random().toString(36).slice(2, 7);
+const getNode = id => nodes.find(n => n.id === id);
+const typeLabel = { event: 'Событие', choice: 'Выбор', branch: 'Ветка' };
+const typeBadge = { event: 'badge-event', choice: 'badge-choice', branch: 'badge-branch' };
+
+function setStatus(msg, timeout = 2500) {
+  statusEl.textContent = msg;
+  clearTimeout(setStatus._t);
+  setStatus._t = setTimeout(() => statusEl.textContent = '', timeout);
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============================================================
+   ВКЛАДКИ
+============================================================ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.pane + '-pane').classList.add('active');
+    if (tab.dataset.pane === 'tree') {
+      renderEdges();
+    }
+  });
+});
+
+/* ============================================================
+   ДЕРЕВО
+============================================================ */
+function renderTree() {
+  [...treeInner.querySelectorAll('.node')].forEach(el => el.remove());
+
+  nodes.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'node ' + n.type;
+    el.dataset.id = n.id;
+    el.style.left = n.x + 'px';
+    el.style.top = n.y + 'px';
+    if (n.id === selectedId) el.classList.add('selected');
+
+    el.innerHTML = `
+      <span class="node-badge ${typeBadge[n.type]}">${typeLabel[n.type]}</span>
+      <div class="node-title">${escapeHtml(n.title) || 'Без названия'}</div>
+      <div class="node-desc">${escapeHtml(n.desc) || '<i>без описания</i>'}</div>
+      <div class="port in" data-port="in" data-id="${n.id}"></div>
+      <div class="port out" data-port="out" data-id="${n.id}"></div>
+    `;
+
+    el.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('port')) return;
+      e.preventDefault();
+      selectNode(n.id);
+      const startX = e.clientX, startY = e.clientY;
+      const origX = n.x, origY = n.y;
+      el.classList.add('dragging');
+      const onMove = ev => {
+        n.x = Math.max(0, origX + (ev.clientX - startX));
+        n.y = Math.max(0, origY + (ev.clientY - startY));
+        el.style.left = n.x + 'px';
+        el.style.top = n.y + 'px';
+        renderEdges();
+      };
+      const onUp = () => {
+        el.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    el.addEventListener('click', () => selectNode(n.id));
+
+    const outPort = el.querySelector('.port.out');
+    outPort.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      e.preventDefault();
+      startLinkDrag(n.id, e);
+    });
+
+    treeInner.appendChild(el);
+  });
+
+  renderEdges();
+}
+
+function renderEdges() {
+  svg.innerHTML = `
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5"
+        markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#89b4fa"/>
+      </marker>
+    </defs>
+  `;
+
+  edges.forEach((e, idx) => {
+    const fromEl = treeInner.querySelector(`.node[data-id="${e.from}"]`);
+    const toEl = treeInner.querySelector(`.node[data-id="${e.to}"]`);
+    if (!fromEl || !toEl) return;
+
+    const fx = parseFloat(fromEl.style.left) + fromEl.offsetWidth;
+    const fy = parseFloat(fromEl.style.top) + fromEl.offsetHeight / 2;
+    const tx = parseFloat(toEl.style.left);
+    const ty = parseFloat(toEl.style.top) + toEl.offsetHeight / 2;
+
+    const dx = Math.max(40, Math.abs(tx - fx) * 0.5);
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    hit.setAttribute('d', `M ${fx} ${fy} C ${fx + dx} ${fy}, ${tx - dx} ${ty}, ${tx} ${ty}`);
+    hit.setAttribute('stroke', 'transparent');
+    hit.setAttribute('stroke-width', '18');
+    hit.setAttribute('fill', 'none');
+    hit.style.pointerEvents = 'stroke';
+    hit.style.cursor = 'pointer';
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${fx} ${fy} C ${fx + dx} ${fy}, ${tx - dx} ${ty}, ${tx} ${ty}`);
+    path.setAttribute('stroke', '#89b4fa');
+    path.setAttribute('stroke-width', '2.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('marker-end', 'url(#arrow)');
+    path.setAttribute('opacity', '0.85');
+    path.style.pointerEvents = 'none';
+
+    const mx = (fx + tx) / 2;
+    const my = (fy + ty) / 2;
+    const cx = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    cx.setAttribute('cx', mx);
+    cx.setAttribute('cy', my);
+    cx.setAttribute('r', '9');
+    cx.setAttribute('fill', '#f38ba8');
+    cx.setAttribute('stroke', '#1e1e2e');
+    cx.setAttribute('stroke-width', '2');
+    cx.style.pointerEvents = 'all';
+    cx.style.cursor = 'pointer';
+    cx.style.opacity = '0';
+    cx.style.transition = 'opacity 0.15s';
+
+    const xtext = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    xtext.setAttribute('x', mx);
+    xtext.setAttribute('y', my + 4);
+    xtext.setAttribute('text-anchor', 'middle');
+    xtext.setAttribute('font-size', '12');
+    xtext.setAttribute('font-weight', '700');
+    xtext.setAttribute('fill', '#1e1e2e');
+    xtext.textContent = '×';
+    xtext.style.pointerEvents = 'none';
+    xtext.style.opacity = '0';
+    xtext.style.transition = 'opacity 0.15s';
+
+    g.addEventListener('mouseenter', () => { cx.style.opacity = '1'; xtext.style.opacity = '1'; });
+    g.addEventListener('mouseleave', () => { cx.style.opacity = '0'; xtext.style.opacity = '0'; });
+
+    const removeEdge = () => {
+      edges.splice(idx, 1);
+      renderEdges();
+      renderEditorLinks();
+      setStatus('Связь удалена');
+    };
+    hit.addEventListener('click', removeEdge);
+    cx.addEventListener('click', removeEdge);
+
+    g.appendChild(hit);
+    g.appendChild(path);
+    g.appendChild(cx);
+    g.appendChild(xtext);
+    svg.appendChild(g);
+  });
+}
+
+function startLinkDrag(fromId, e) {
+  const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  tempPath.setAttribute('stroke', '#f9e2af');
+  tempPath.setAttribute('stroke-width', '2.5');
+  tempPath.setAttribute('stroke-dasharray', '6 4');
+  tempPath.setAttribute('fill', 'none');
+  svg.appendChild(tempPath);
+
+  const fromEl = treeInner.querySelector(`.node[data-id="${fromId}"]`);
+  const fx = parseFloat(fromEl.style.left) + fromEl.offsetWidth;
+  const fy = parseFloat(fromEl.style.top) + fromEl.offsetHeight / 2;
+
+  const onMove = ev => {
+    const rect = treeInner.getBoundingClientRect();
+    const mx = ev.clientX - rect.left;
+    const my = ev.clientY - rect.top;
+    const dx = Math.max(40, Math.abs(mx - fx) * 0.5);
+    tempPath.setAttribute('d', `M ${fx} ${fy} C ${fx + dx} ${fy}, ${mx - dx} ${my}, ${mx} ${my}`);
+  };
+
+  const onUp = ev => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    tempPath.remove();
+
+    const target = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.node');
+    if (target && target.dataset.id !== fromId) {
+      const toId = target.dataset.id;
+      if (!edges.some(ed => ed.from === fromId && ed.to === toId)) {
+        edges.push({ from: fromId, to: toId });
+        setStatus('Связь создана');
+      }
+    }
+    renderEdges();
+    renderEditorLinks();
+  };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function selectNode(id) {
+  selectedId = id;
+  document.querySelectorAll('.node').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+  const n = id ? getNode(id) : null;
+  if (!n) {
+    editor.style.display = 'none';
+    editorEmpty.style.display = 'block';
+    return;
+  }
+  editorEmpty.style.display = 'none';
+  editor.style.display = 'block';
+  document.getElementById('edit-title').value = n.title;
+  document.getElementById('edit-type').value = n.type;
+  document.getElementById('edit-desc').value = n.desc;
+  renderEditorLinks();
+}
+
+function renderEditorLinks() {
+  if (!selectedId) return;
+  const incoming = edges.map((e, i) => ({ ...e, idx: i })).filter(e => e.to === selectedId);
+  const outgoing = edges.map((e, i) => ({ ...e, idx: i })).filter(e => e.from === selectedId);
+
+  const inList = document.getElementById('incoming-list');
+  const outList = document.getElementById('outgoing-list');
+  inList.innerHTML = '';
+  outList.innerHTML = '';
+
+  if (incoming.length === 0) {
+    inList.innerHTML = '<li class="hint">Нет входящих связей</li>';
+  } else {
+    incoming.forEach(e => {
+      const fromN = getNode(e.from);
+      if (!fromN) return;
+      const li = document.createElement('li');
+      li.className = 'link-item';
+      li.innerHTML = `<span class="link-text"><b>${escapeHtml(fromN.title) || 'Без названия'}</b> → этот</span><button title="Отвязать">×</button>`;
+      li.querySelector('button').addEventListener('click', () => {
+        edges.splice(e.idx, 1);
+        renderEdges(); renderEditorLinks();
+        setStatus('Связь удалена');
+      });
+      inList.appendChild(li);
+    });
+  }
+
+  if (outgoing.length === 0) {
+    outList.innerHTML = '<li class="hint">Нет исходящих связей</li>';
+  } else {
+    outgoing.forEach(e => {
+      const toN = getNode(e.to);
+      if (!toN) return;
+      const li = document.createElement('li');
+      li.className = 'link-item';
+      li.innerHTML = `<span class="link-text">этот → <b>${escapeHtml(toN.title) || 'Без названия'}</b></span><button title="Отвязать">×</button>`;
+      li.querySelector('button').addEventListener('click', () => {
+        edges.splice(e.idx, 1);
+        renderEdges(); renderEditorLinks();
+        setStatus('Связь удалена');
+      });
+      outList.appendChild(li);
+    });
+  }
+}
+
+document.getElementById('edit-title').addEventListener('input', e => {
+  const n = getNode(selectedId); if (!n) return;
+  n.title = e.target.value;
+  updateNodeVisual(n);
+});
+document.getElementById('edit-type').addEventListener('change', e => {
+  const n = getNode(selectedId); if (!n) return;
+  n.type = e.target.value;
+  updateNodeVisual(n);
+});
+document.getElementById('edit-desc').addEventListener('input', e => {
+  const n = getNode(selectedId); if (!n) return;
+  n.desc = e.target.value;
+  updateNodeVisual(n);
+});
+
+function updateNodeVisual(n) {
+  const el = treeInner.querySelector(`.node[data-id="${n.id}"]`);
+  if (!el) return;
+  el.className = 'node ' + n.type + (n.id === selectedId ? ' selected' : '');
+  el.querySelector('.node-badge').className = 'node-badge ' + typeBadge[n.type];
+  el.querySelector('.node-badge').textContent = typeLabel[n.type];
+  el.querySelector('.node-title').textContent = n.title || 'Без названия';
+  el.querySelector('.node-desc').innerHTML = escapeHtml(n.desc) || '<i>без описания</i>';
+}
+
+document.querySelectorAll('[data-add]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.add;
+    const x = 60 + Math.random() * 400;
+    const y = 60 + Math.random() * 400;
+    const id = uid();
+    nodes.push({ id, title: 'Новый узел', type, desc: '', x, y });
+    renderTree();
+    selectNode(id);
+    setStatus('Узел добавлен');
+  });
+});
+
+document.getElementById('btn-delete').addEventListener('click', () => {
+  if (!selectedId) { setStatus('Узел не выбран'); return; }
+  const n = getNode(selectedId);
+  if (!n) return;
+  if (!confirm(`Удалить узел «${n.title || 'Без названия'}» и все его связи?`)) return;
+  const idToDelete = selectedId;
+  nodes = nodes.filter(n => n.id !== idToDelete);
+  edges = edges.filter(e => e.from !== idToDelete && e.to !== idToDelete);
+  selectedId = null;
+  renderTree();
+  selectNode(null);
+  setStatus('Узел удалён');
+});
+
+document.getElementById('btn-connect').addEventListener('click', () => {
+  if (!selectedId) return;
+  const sel = document.getElementById('link-target-select');
+  sel.innerHTML = '';
+  nodes.filter(n => n.id !== selectedId).forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n.id;
+    opt.textContent = `${n.title || 'Без названия'} [${typeLabel[n.type]}]`;
+    sel.appendChild(opt);
+  });
+  if (sel.options.length === 0) { setStatus('Нет других узлов'); return; }
+  document.getElementById('link-modal').classList.add('active');
+});
+
+document.getElementById('link-cancel').addEventListener('click', () => {
+  document.getElementById('link-modal').classList.remove('active');
+});
+document.getElementById('link-ok').addEventListener('click', () => {
+  const to = document.getElementById('link-target-select').value;
+  const dir = document.getElementById('link-dir').value;
+  if (!to) return;
+  let from, target;
+  if (dir === 'out') { from = selectedId; target = to; }
+  else { from = to; target = selectedId; }
+  if (!edges.some(e => e.from === from && e.to === target)) {
+    edges.push({ from, to: target });
+    setStatus('Связь создана');
+  } else {
+    setStatus('Такая связь уже есть');
+  }
+  document.getElementById('link-modal').classList.remove('active');
+  renderEdges();
+  renderEditorLinks();
+});
+
+document.getElementById('btn-save').addEventListener('click', () => {
+  localStorage.setItem('plotTree', JSON.stringify({ nodes, edges }));
+  setStatus('Сохранено в браузере');
+});
+document.getElementById('btn-load').addEventListener('click', () => {
+  const raw = localStorage.getItem('plotTree');
+  if (!raw) { setStatus('Нет сохранённых данных'); return; }
+  try {
+    const data = JSON.parse(raw);
+    nodes = data.nodes || [];
+    edges = data.edges || [];
+    selectedId = null;
+    renderTree();
+    selectNode(null);
+    setStatus('Загружено');
+  } catch (e) { setStatus('Ошибка загрузки'); }
+});
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (!confirm('Удалить ВСЕ узлы и связи?')) return;
+  nodes = []; edges = []; selectedId = null;
+  renderTree(); selectNode(null);
+  setStatus('Очищено');
+});
+
+/* ============================================================
+   ТЕКСТ СЮЖЕТА — РАБОТА С ВЫДЕЛЕНИЕМ
+   Ключевой момент: выделение сохраняется в savedRange
+   через событие mouseup/keyup ВНУТРИ редактора, а также
+   при selectionchange — но только если выделение внутри.
+   Кнопки используют savedRange, а не живое выделение
+   (которое теряется при клике на кнопку).
+============================================================ */
+
+(function restoreStoryText() {
+  const saved = localStorage.getItem('storyText');
+  if (saved) storyEditor.innerText = saved;
+})();
+
+storyEditor.addEventListener('input', () => {
+  localStorage.setItem('storyText', storyEditor.innerText);
+});
+
+/* Сохраняем выделение когда пользователь отпускает мышь/клавишу */
+function captureSelection() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+
+  const range = sel.getRangeAt(0);
+  if (!storyEditor.contains(range.commonAncestorContainer)) return;
+
+  if (sel.isCollapsed) {
+    // пустое выделение — не сбрасываем сразу, чтобы дать шанс на клик
+    // но показываем что нет выделения
+    savedSelectionText = '';
+    savedRange = null;
+    updateSelectionUI();
+    return;
+  }
+
+  const text = sel.toString().trim();
+  if (!text) {
+    savedSelectionText = '';
+    savedRange = null;
+    updateSelectionUI();
+    return;
+  }
+
+  savedSelectionText = text;
+  savedRange = range.cloneRange();
+  updateSelectionUI();
+}
+
+storyEditor.addEventListener('mouseup', () => {
+  // небольшая задержка, чтобы выделение успело завершиться
+  setTimeout(captureSelection, 10);
+});
+storyEditor.addEventListener('keyup', () => {
+  setTimeout(captureSelection, 10);
+});
+
+/* Также при изменении выделения — но не сбрасываем при клике на кнопки.
+   Слушаем только если выделение внутри редактора. */
+document.addEventListener('selectionchange', () => {
+  // Если модалка открыта — не трогаем сохранённое выделение
+  if (document.querySelector('.modal-overlay.active')) return;
+
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+  if (!storyEditor.contains(range.commonAncestorContainer)) return;
+
+  // Не сбрасываем, если выделение пустое, но сохранённое есть —
+  // это может быть клик на кнопку. Проверим activeElement.
+  if (sel.isCollapsed) {
+    // Если фокус ушёл с редактора (например, клик по кнопке) — не сбрасываем
+    if (document.activeElement !== storyEditor) return;
+    savedSelectionText = '';
+    savedRange = null;
+    updateSelectionUI();
+    return;
+  }
+
+  const text = sel.toString().trim();
+  if (text) {
+    savedSelectionText = text;
+    savedRange = sel.getRangeAt(0).cloneRange();
+    updateSelectionUI();
+  }
+});
+
+function updateSelectionUI() {
+  if (savedSelectionText) {
+    btnMake.disabled = false;
+    btnLink.disabled = false;
+    selInfo.innerHTML = `Выделено: <b>${savedSelectionText.length}</b> симв.`;
+    showBanner(savedSelectionText);
+  } else {
+    btnMake.disabled = true;
+    btnLink.disabled = true;
+    selInfo.textContent = 'Выделите текст для действий';
+    hideBanner();
+  }
+}
+
+function showBanner(text) {
+  sbText.textContent = text.length > 60 ? text.slice(0, 60) + '…' : text;
+  banner.classList.add('show');
+}
+function hideBanner() {
+  banner.classList.remove('show');
+}
+
+document.getElementById('sb-cancel').addEventListener('click', () => {
+  clearSelection();
+});
+
+function clearSelection() {
+  savedSelectionText = '';
+  savedRange = null;
+  window.getSelection().removeAllRanges();
+  updateSelectionUI();
+}
+
+/* ---------- Создать узел из выделения ---------- */
+function openMakeNodeModal() {
+  if (!savedSelectionText) {
+    setStatus('Сначала выделите текст');
+    return;
+  }
+  document.getElementById('mn-title').value = savedSelectionText.slice(0, 60);
+  document.getElementById('mn-desc').value = savedSelectionText;
+
+  const parentSel = document.getElementById('mn-parent');
+  parentSel.innerHTML = '<option value="">— Не привязывать (корневой) —</option>';
+  nodes.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n.id;
+    opt.textContent = `${n.title || 'Без названия'} [${typeLabel[n.type]}]`;
+    parentSel.appendChild(opt);
+  });
+
+  document.getElementById('make-node-modal').classList.add('active');
+}
+
+document.getElementById('btn-make-node').addEventListener('click', openMakeNodeModal);
+document.getElementById('sb-make').addEventListener('click', openMakeNodeModal);
+
+document.getElementById('mn-cancel').addEventListener('click', () => {
+  document.getElementById('make-node-modal').classList.remove('active');
+});
+document.getElementById('mn-save').addEventListener('click', () => {
+  const title = document.getElementById('mn-title').value.trim() || 'Без названия';
+  const type = document.getElementById('mn-type').value;
+  const desc = document.getElementById('mn-desc').value;
+  const parentId = document.getElementById('mn-parent').value;
+
+  const id = uid();
+  let x, y;
+  if (parentId) {
+    const parent = getNode(parentId);
+    x = parent.x + 260;
+    y = parent.y + 120 + Math.random() * 80;
+  } else {
+    x = 80 + Math.random() * 400;
+    y = 80 + Math.random() * 400;
+  }
+
+  nodes.push({ id, title, type, desc, x, y });
+  if (parentId) edges.push({ from: parentId, to: id });
+
+  document.getElementById('make-node-modal').classList.remove('active');
+  clearSelection();
+  renderTree();
+  selectNode(id);
+  setStatus('Узел создан из выделения');
+});
+
+/* ---------- Привязать выделение к узлу ---------- */
+function openLinkToNodeModal() {
+  if (!savedSelectionText) {
+    setStatus('Сначала выделите текст');
+    return;
+  }
+  if (nodes.length === 0) {
+    setStatus('Сначала создайте хотя бы один узел');
+    return;
+  }
+  const sel = document.getElementById('ltn-select');
+  sel.innerHTML = '';
+  nodes.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n.id;
+    opt.textContent = `${n.title || 'Без названия'} [${typeLabel[n.type]}]`;
+    sel.appendChild(opt);
+  });
+  document.getElementById('link-to-node-modal').classList.add('active');
+}
+
+document.getElementById('btn-link-to-node').addEventListener('click', openLinkToNodeModal);
+document.getElementById('sb-link').addEventListener('click', openLinkToNodeModal);
+
+document.getElementById('ltn-cancel').addEventListener('click', () => {
+  document.getElementById('link-to-node-modal').classList.remove('active');
+});
+document.getElementById('ltn-ok').addEventListener('click', () => {
+  const id = document.getElementById('ltn-select').value;
+  const n = getNode(id);
+  if (!n) return;
+  n.desc = (n.desc ? n.desc + '\n\n' : '') + savedSelectionText;
+  document.getElementById('link-to-node-modal').classList.remove('active');
+  clearSelection();
+  renderTree();
+  if (selectedId === id) selectNode(id);
+  setStatus('Выделение привязано к узлу как описание');
+});
+
+document.getElementById('story-export').addEventListener('click', () => {
+  const data = JSON.stringify({
+    nodes, edges,
+    storyText: storyEditor.innerText
+  }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'plot-tree.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus('Экспортировано');
+});
+
+window.addEventListener('resize', renderEdges);
+
+(function init() {
+  const raw = localStorage.getItem('plotTree');
+  if (raw) {
+    try {
+      const d = JSON.parse(raw);
+      nodes = d.nodes || [];
+      edges = d.edges || [];
+    } catch (e) {}
+  }
+  if (nodes.length === 0) {
+    const startId = uid();
+    nodes.push({
+      id: startId, title: 'Начало истории', type: 'event',
+      desc: 'Герой просыпается в незнакомом месте.', x: 80, y: 200
+    });
+    const c1 = uid();
+    nodes.push({
+      id: c1, title: 'Пойти налево', type: 'choice',
+      desc: 'Выбор пути.', x: 380, y: 80
+    });
+    const c2 = uid();
+    nodes.push({
+      id: c2, title: 'Пойти направо', type: 'choice',
+      desc: 'Выбор пути.', x: 380, y: 320
+    });
+    edges.push({ from: startId, to: c1 }, { from: startId, to: c2 });
+  }
+  renderTree();
+})();
+</script>
+</body>
+</html>
