@@ -45,20 +45,19 @@
   .pane.active { display: flex; }
 
   /* ===== ДЕРЕВО ===== */
-  #tree-pane { flex-direction: row; }
+  #tree-pane { flex-direction: row; position: relative; }
 
   #tree-canvas {
     flex: 1;
     position: relative;
-    overflow: hidden;              /* скролл через transform-слой */
+    overflow: hidden;
     background:
       linear-gradient(90deg, rgba(137,180,250,0.05) 1px, transparent 1px) 0 0 / 40px 40px,
       linear-gradient(rgba(137,180,250,0.05) 1px, transparent 1px) 0 0 / 40px 40px,
       #1e1e2e;
-    touch-action: none;            /* жесты полностью наши */
+    touch-action: none;
   }
 
-  /* Слой, который масштабируется и панорамируется */
   #tree-viewport {
     position: absolute;
     top: 0; left: 0;
@@ -148,21 +147,29 @@
   .port.in { left: -11px; top: 50%; transform: translateY(-50%); pointer-events: none; }
 
   /* ===== ПРАВАЯ ПАНЕЛЬ ===== */
+  .toolbar-wrap {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    height: 100%;
+  }
+
   .toolbar {
     width: 280px;
+    height: 100%;
     background: #181825;
     border-left: 2px solid #313244;
     padding: 18px;
     overflow-y: auto;
-    flex-shrink: 0;
-    position: relative;
-    transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease;
+    transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease, border-width 0.22s ease;
   }
   .toolbar.collapsed {
     width: 0;
+    padding-top: 18px;
+    padding-bottom: 18px;
     padding-left: 0;
     padding-right: 0;
-    border-left: none;
+    border-left-width: 0;
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
@@ -177,13 +184,14 @@
   }
   .toolbar h3:first-child { margin-top: 0; }
 
-  /* Стрелка-переключатель на границе панели */
+  /* Стрелка-переключатель всегда доступна и кликабельна */
   #panel-toggle {
     position: absolute;
     top: 50%;
-    left: 0;
-    transform: translate(-50%, -50%);
-    width: 30px; height: 60px;
+    left: -15px;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 60px;
     background: #89b4fa;
     color: #1e1e2e;
     border: 2px solid #1e1e2e;
@@ -192,15 +200,16 @@
     font-size: 20px;
     font-weight: 700;
     line-height: 1;
-    display: none;                /* только на мобилке */
+    display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 20;
+    z-index: 25;
     box-shadow: 0 4px 14px rgba(0,0,0,0.5);
     user-select: none;
     padding: 0;
   }
-  #panel-toggle:active { background: #a5c8ff; }
+  #panel-toggle:hover { background: #a5c8ff; }
+  #panel-toggle:active { background: #74a8f8; }
 
   .btn {
     display: block;
@@ -610,32 +619,25 @@
   body.mobile .tabs { overflow-x: auto; }
   body.mobile .tab { padding: 14px 16px; font-size: 14px; }
 
-  body.mobile #panel-toggle { display: flex; }
-
-  body.mobile .toolbar {
-    width: 300px;               /* чуть шире для пальцев */
+  body.mobile .toolbar:not(.collapsed) {
+    width: 300px;
   }
-  body.mobile .toolbar.collapsed { width: 0; }
   body.mobile .btn { padding: 13px 14px; font-size: 15px; }
   body.mobile .field input,
   body.mobile .field textarea,
   body.mobile .field select { font-size: 16px; padding: 12px; }
   body.mobile .link-item button { width: 34px; height: 34px; font-size: 17px; }
 
-  /* Узлы крупнее на мобилке не нужны — их масштабируют пальцами */
-
-  /* Кнопки сюжета — крупные */
   body.mobile .story-toolbar {
     padding: 10px 12px;
     gap: 8px;
   }
   body.mobile .story-toolbar .btn { padding: 12px 14px; font-size: 14px; }
-  body.mobile .story-toolbar .selected-info { display: none; } /* не мешаем — есть плашка снизу */
+  body.mobile .story-toolbar .selected-info { display: none; }
 
   body.mobile #story-editor-wrap { padding: 16px 10px; }
   body.mobile #story-editor { padding: 20px 18px; font-size: 17px; }
 
-  /* Описания узлов на мобилке: список сверху, редактор снизу */
   body.mobile #desc-pane { flex-direction: column; }
   body.mobile .desc-sidebar {
     width: 100%;
@@ -648,7 +650,6 @@
   body.mobile .desc-main-body { padding: 16px; }
   body.mobile .desc-main-body textarea { font-size: 16px; min-height: 300px; }
 
-  /* Плавающая панель масштаба на дереве */
   #zoom-controls {
     position: absolute;
     bottom: 16px;
@@ -706,50 +707,52 @@
         <button id="zoom-reset" title="Сбросить масштаб" style="font-size:14px;">⟲</button>
       </div>
     </div>
-    <div class="toolbar" id="tree-toolbar">
+
+    <div class="toolbar-wrap">
       <div id="panel-toggle" title="Свернуть/развернуть панель">›</div>
+      <div class="toolbar" id="tree-toolbar">
+        <h3>Добавить узел</h3>
+        <button class="btn primary" data-add="event">＋ Главное событие</button>
+        <button class="btn success" data-add="choice">＋ Выбор / разветвление</button>
+        <button class="btn" data-add="branch">＋ Ветка</button>
 
-      <h3>Добавить узел</h3>
-      <button class="btn primary" data-add="event">＋ Главное событие</button>
-      <button class="btn success" data-add="choice">＋ Выбор / разветвление</button>
-      <button class="btn" data-add="branch">＋ Ветка</button>
+        <h3>Выбранный узел</h3>
+        <div id="editor-empty" class="empty-msg">Узел не выбран</div>
+        <div id="editor" style="display:none;">
+          <div class="field">
+            <label>Заголовок</label>
+            <input type="text" id="edit-title">
+          </div>
+          <div class="field">
+            <label>Тип</label>
+            <select id="edit-type">
+              <option value="event">Главное событие</option>
+              <option value="choice">Выбор / разветвление</option>
+              <option value="branch">Ветка</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Описание (кратко для дерева)</label>
+            <textarea id="edit-desc"></textarea>
+          </div>
 
-      <h3>Выбранный узел</h3>
-      <div id="editor-empty" class="empty-msg">Узел не выбран</div>
-      <div id="editor" style="display:none;">
-        <div class="field">
-          <label>Заголовок</label>
-          <input type="text" id="edit-title">
+          <div class="link-section-title">Входящие связи (откуда)</div>
+          <ul class="link-list" id="incoming-list"></ul>
+
+          <div class="link-section-title">Исходящие связи (куда)</div>
+          <ul class="link-list" id="outgoing-list"></ul>
+
+          <button class="btn warning" id="btn-connect">🔗 Добавить связь к…</button>
+          <button class="btn danger" id="btn-delete">🗑 Удалить узел полностью</button>
+          <p class="hint">Двумя пальцами — масштаб и панорама. Тяните узел, чтобы переместить. Тяните от правой точки узла к другому, чтобы создать связь.</p>
         </div>
-        <div class="field">
-          <label>Тип</label>
-          <select id="edit-type">
-            <option value="event">Главное событие</option>
-            <option value="choice">Выбор / разветвление</option>
-            <option value="branch">Ветка</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Описание (кратко для дерева)</label>
-          <textarea id="edit-desc"></textarea>
-        </div>
 
-        <div class="link-section-title">Входящие связи (откуда)</div>
-        <ul class="link-list" id="incoming-list"></ul>
-
-        <div class="link-section-title">Исходящие связи (куда)</div>
-        <ul class="link-list" id="outgoing-list"></ul>
-
-        <button class="btn warning" id="btn-connect">🔗 Добавить связь к…</button>
-        <button class="btn danger" id="btn-delete">🗑 Удалить узел полностью</button>
-        <p class="hint">Двумя пальцами — масштаб и панорама. Тяните узел, чтобы переместить. Тяните от правой точки узла к другому, чтобы создать связь.</p>
+        <h3>Действия</h3>
+        <button class="btn" id="btn-save">💾 Сохранить в браузере</button>
+        <button class="btn" id="btn-load">📂 Загрузить</button>
+        <button class="btn danger" id="btn-clear">🗑 Очистить всё</button>
+        <p class="hint" id="status"></p>
       </div>
-
-      <h3>Действия</h3>
-      <button class="btn" id="btn-save">💾 Сохранить в браузере</button>
-      <button class="btn" id="btn-load">📂 Загрузить</button>
-      <button class="btn danger" id="btn-clear">🗑 Очистить всё</button>
-      <p class="hint" id="status"></p>
     </div>
   </div>
 
@@ -996,20 +999,20 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 /* ============================================================
-   СВОРАЧИВАНИЕ ПРАВОЙ ПАНЕЛИ (мобилка)
+   СВОРАЧИВАНИЕ ПРАВОЙ ПАНЕЛИ (в начале открыта; закрывается и открывается строго по стрелочке)
 ============================================================ */
-panelToggle.addEventListener('click', () => {
-  treeToolbar.classList.toggle('collapsed');
-  const collapsed = treeToolbar.classList.contains('collapsed');
-  panelToggle.textContent = collapsed ? '‹' : '›';
-  // после сворачивания/разворачивания пересчитываем связи
+let panelCollapsed = false;
+
+panelToggle.addEventListener('click', e => {
+  e.stopPropagation();
+  panelCollapsed = !panelCollapsed;
+  treeToolbar.classList.toggle('collapsed', panelCollapsed);
+  panelToggle.textContent = panelCollapsed ? '‹' : '›';
   setTimeout(renderEdges, 250);
 });
 
 /* ============================================================
    МАСШТАБ И ПАНОРАМА ПОЛЯ С УЗЛАМИ
-   — работают ВСЕГДА на ПК (колесо/жесты)
-   — работают пальцами на мобилке
 ============================================================ */
 let view = { scale: 1, x: 0, y: 0 };
 const MIN_SCALE = 0.2;
@@ -1030,21 +1033,18 @@ function zoomAt(clientX, clientY, factor) {
   const py = clientY - rect.top;
   const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, view.scale * factor));
   const realFactor = newScale / view.scale;
-  // сохраняем точку под пальцем/курсором на месте
   view.x = px - (px - view.x) * realFactor;
   view.y = py - (py - view.y) * realFactor;
   view.scale = newScale;
   applyView();
 }
 
-/* --- Колесо мыши (ПК) --- */
 treeCanvas.addEventListener('wheel', e => {
   e.preventDefault();
   const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
   zoomAt(e.clientX, e.clientY, factor);
 }, { passive: false });
 
-/* --- Кнопки масштаба --- */
 document.getElementById('zoom-in').addEventListener('click', () => {
   const r = treeCanvas.getBoundingClientRect();
   zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.25);
@@ -1055,16 +1055,13 @@ document.getElementById('zoom-out').addEventListener('click', () => {
 });
 document.getElementById('zoom-reset').addEventListener('click', resetView);
 
-/* --- Точки касания (мультитач) --- */
-const pointers = new Map();          // pointerId -> {x, y, startX, startY, type}
-let pinchStart = null;               // {dist, scale, cx, cy, viewX, viewY}
-let panStart = null;                 // для панорамы одним/двумя пальцами
-let draggedNode = null;              // если тащим узел
+const pointers = new Map();
+let pinchStart = null;
+let panStart = null;
+let draggedNode = null;
 let draggedNodeStart = null;
 
-/* pointerdown по канвасу */
 treeCanvas.addEventListener('pointerdown', e => {
-  // если клик пришёл с узла или порта — обрабатывается их обработчиками
   if (e.target.closest('.node')) return;
   if (e.target.closest('#zoom-controls')) return;
 
@@ -1072,10 +1069,8 @@ treeCanvas.addEventListener('pointerdown', e => {
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
   if (pointers.size === 1) {
-    // начало панорамы
     panStart = { x: e.clientX, y: e.clientY, viewX: view.x, viewY: view.y };
   } else if (pointers.size === 2) {
-    // начало пинч-зума
     const pts = [...pointers.values()];
     const dx = pts[0].x - pts[1].x;
     const dy = pts[0].y - pts[1].y;
@@ -1097,12 +1092,10 @@ treeCanvas.addEventListener('pointermove', e => {
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
   if (pointers.size === 1 && panStart && !pinchStart) {
-    // панорама одним пальцем / ЛКМ
     view.x = panStart.viewX + (e.clientX - panStart.x);
     view.y = panStart.viewY + (e.clientY - panStart.y);
     applyView();
   } else if (pointers.size === 2 && pinchStart) {
-    // pinch-zoom
     const pts = [...pointers.values()];
     const dx = pts[0].x - pts[1].x;
     const dy = pts[0].y - pts[1].y;
@@ -1126,7 +1119,6 @@ function endPointer(e) {
   if (pointers.size < 2) pinchStart = null;
   if (pointers.size === 0) { panStart = null; }
   else if (pointers.size === 1) {
-    // остался один палец — продолжаем панораму с текущей позиции
     const p = [...pointers.values()][0];
     panStart = { x: p.x, y: p.y, viewX: view.x, viewY: view.y };
   }
@@ -1161,9 +1153,8 @@ function renderTree() {
       <div class="port out" data-port="out" data-id="${n.id}"></div>
     `;
 
-    /* Перетаскивание узла — pointer-события (работают и мышь, и палец) */
     el.addEventListener('pointerdown', e => {
-      if (e.target.classList.contains('port')) return; // порт сам обработает
+      if (e.target.classList.contains('port')) return;
       e.stopPropagation();
       el.setPointerCapture(e.pointerId);
       selectNode(n.id);
@@ -1197,7 +1188,6 @@ function renderTree() {
     el.addEventListener('pointerup', endDrag);
     el.addEventListener('pointercancel', endDrag);
 
-    /* Порт "out" — начало связи */
     const outPort = el.querySelector('.port.out');
     outPort.addEventListener('pointerdown', e => {
       e.stopPropagation();
@@ -1367,12 +1357,6 @@ function selectNode(id) {
   document.getElementById('edit-type').value = n.type;
   document.getElementById('edit-desc').value = n.desc;
   renderEditorLinks();
-
-  // на мобилке: если панель свёрнута — развернуть, чтобы увидеть редактор
-  if (isMobile && treeToolbar.classList.contains('collapsed')) {
-    treeToolbar.classList.remove('collapsed');
-    panelToggle.textContent = '›';
-  }
 }
 
 function renderEditorLinks() {
