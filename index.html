@@ -146,14 +146,7 @@
   .port.out:hover { transform: translateY(-50%) scale(1.2); }
   .port.in { left: -11px; top: 50%; transform: translateY(-50%); pointer-events: none; }
 
-  /* ===== ПРАВАЯ ПАНЕЛЬ ===== */
-  .toolbar-wrap {
-    position: relative;
-    display: flex;
-    flex-shrink: 0;
-    height: 100%;
-  }
-
+  /* ===== ПРАВАЯ ПАНЕЛЬ И СТРЕЛКА ===== */
   .toolbar {
     width: 280px;
     height: 100%;
@@ -161,6 +154,7 @@
     border-left: 2px solid #313244;
     padding: 18px;
     overflow-y: auto;
+    flex-shrink: 0;
     transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease, border-width 0.22s ease;
   }
   .toolbar.collapsed {
@@ -184,12 +178,11 @@
   }
   .toolbar h3:first-child { margin-top: 0; }
 
-  /* Стрелка-переключатель всегда доступна и кликабельна */
   #panel-toggle {
     position: absolute;
     top: 50%;
-    left: -15px;
-    transform: translateY(-50%);
+    right: 280px;
+    transform: translate(50%, -50%);
     width: 30px;
     height: 60px;
     background: #89b4fa;
@@ -203,10 +196,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 25;
+    z-index: 30;
     box-shadow: 0 4px 14px rgba(0,0,0,0.5);
     user-select: none;
     padding: 0;
+    transition: right 0.22s ease, background 0.15s;
+  }
+  #panel-toggle.panel-closed {
+    right: 0;
+    transform: translate(-25%, -50%);
   }
   #panel-toggle:hover { background: #a5c8ff; }
   #panel-toggle:active { background: #74a8f8; }
@@ -622,6 +620,9 @@
   body.mobile .toolbar:not(.collapsed) {
     width: 300px;
   }
+  body.mobile #panel-toggle:not(.panel-closed) {
+    right: 300px;
+  }
   body.mobile .btn { padding: 13px 14px; font-size: 15px; }
   body.mobile .field input,
   body.mobile .field textarea,
@@ -708,51 +709,50 @@
       </div>
     </div>
 
-    <div class="toolbar-wrap">
-      <div id="panel-toggle" title="Свернуть/развернуть панель">›</div>
-      <div class="toolbar" id="tree-toolbar">
-        <h3>Добавить узел</h3>
-        <button class="btn primary" data-add="event">＋ Главное событие</button>
-        <button class="btn success" data-add="choice">＋ Выбор / разветвление</button>
-        <button class="btn" data-add="branch">＋ Ветка</button>
+    <div id="panel-toggle" title="Свернуть/развернуть панель">›</div>
 
-        <h3>Выбранный узел</h3>
-        <div id="editor-empty" class="empty-msg">Узел не выбран</div>
-        <div id="editor" style="display:none;">
-          <div class="field">
-            <label>Заголовок</label>
-            <input type="text" id="edit-title">
-          </div>
-          <div class="field">
-            <label>Тип</label>
-            <select id="edit-type">
-              <option value="event">Главное событие</option>
-              <option value="choice">Выбор / разветвление</option>
-              <option value="branch">Ветка</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Описание (кратко для дерева)</label>
-            <textarea id="edit-desc"></textarea>
-          </div>
+    <div class="toolbar" id="tree-toolbar">
+      <h3>Добавить узел</h3>
+      <button class="btn primary" data-add="event">＋ Главное событие</button>
+      <button class="btn success" data-add="choice">＋ Выбор / разветвление</button>
+      <button class="btn" data-add="branch">＋ Ветка</button>
 
-          <div class="link-section-title">Входящие связи (откуда)</div>
-          <ul class="link-list" id="incoming-list"></ul>
-
-          <div class="link-section-title">Исходящие связи (куда)</div>
-          <ul class="link-list" id="outgoing-list"></ul>
-
-          <button class="btn warning" id="btn-connect">🔗 Добавить связь к…</button>
-          <button class="btn danger" id="btn-delete">🗑 Удалить узел полностью</button>
-          <p class="hint">Двумя пальцами — масштаб и панорама. Тяните узел, чтобы переместить. Тяните от правой точки узла к другому, чтобы создать связь.</p>
+      <h3>Выбранный узел</h3>
+      <div id="editor-empty" class="empty-msg">Узел не выбран</div>
+      <div id="editor" style="display:none;">
+        <div class="field">
+          <label>Заголовок</label>
+          <input type="text" id="edit-title">
+        </div>
+        <div class="field">
+          <label>Тип</label>
+          <select id="edit-type">
+            <option value="event">Главное событие</option>
+            <option value="choice">Выбор / разветвление</option>
+            <option value="branch">Ветка</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Описание (кратко для дерева)</label>
+          <textarea id="edit-desc"></textarea>
         </div>
 
-        <h3>Действия</h3>
-        <button class="btn" id="btn-save">💾 Сохранить в браузере</button>
-        <button class="btn" id="btn-load">📂 Загрузить</button>
-        <button class="btn danger" id="btn-clear">🗑 Очистить всё</button>
-        <p class="hint" id="status"></p>
+        <div class="link-section-title">Входящие связи (откуда)</div>
+        <ul class="link-list" id="incoming-list"></ul>
+
+        <div class="link-section-title">Исходящие связи (куда)</div>
+        <ul class="link-list" id="outgoing-list"></ul>
+
+        <button class="btn warning" id="btn-connect">🔗 Добавить связь к…</button>
+        <button class="btn danger" id="btn-delete">🗑 Удалить узел полностью</button>
+        <p class="hint">Двумя пальцами — масштаб и панорама. Тяните узел, чтобы переместить. Тяните от правой точки узла к другому, чтобы создать связь.</p>
       </div>
+
+      <h3>Действия</h3>
+      <button class="btn" id="btn-save">💾 Сохранить в браузере</button>
+      <button class="btn" id="btn-load">📂 Загрузить</button>
+      <button class="btn danger" id="btn-clear">🗑 Очистить всё</button>
+      <p class="hint" id="status"></p>
     </div>
   </div>
 
@@ -913,8 +913,11 @@ const isMobile = (() => {
 if (isMobile) document.body.classList.add('mobile');
 
 /* ============================================================
-   МОДЕЛЬ
+   МОДЕЛЬ И АВТОСОХРАНЕНИЕ
 ============================================================ */
+const STORAGE_KEY_TREE = 'plotTree_v2';
+const STORAGE_KEY_STORY = 'storyText_v2';
+
 let nodes = [];
 let edges = [];
 let selectedId = null;
@@ -959,6 +962,16 @@ function setStatus(msg, timeout = 2500) {
   setStatus._t = setTimeout(() => statusEl.textContent = '', timeout);
 }
 
+function saveAllToStorage(showMsg = false) {
+  try {
+    localStorage.setItem(STORAGE_KEY_TREE, JSON.stringify({ nodes, edges }));
+    localStorage.setItem(STORAGE_KEY_STORY, storyEditor.innerText);
+    if (showMsg) setStatus('Сохранено в браузере');
+  } catch (e) {
+    if (showMsg) setStatus('Ошибка сохранения');
+  }
+}
+
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -999,7 +1012,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 /* ============================================================
-   СВОРАЧИВАНИЕ ПРАВОЙ ПАНЕЛИ (в начале открыта; закрывается и открывается строго по стрелочке)
+   СВОРАЧИВАНИЕ / РАЗВОРАЧИВАНИЕ ПРАВОЙ ПАНЕЛИ ПО СТРЕЛОЧКЕ
 ============================================================ */
 let panelCollapsed = false;
 
@@ -1007,6 +1020,7 @@ panelToggle.addEventListener('click', e => {
   e.stopPropagation();
   panelCollapsed = !panelCollapsed;
   treeToolbar.classList.toggle('collapsed', panelCollapsed);
+  panelToggle.classList.toggle('panel-closed', panelCollapsed);
   panelToggle.textContent = panelCollapsed ? '‹' : '›';
   setTimeout(renderEdges, 250);
 });
@@ -1183,6 +1197,7 @@ function renderTree() {
         el.classList.remove('dragging');
         draggedNode = null;
         draggedNodeStart = null;
+        saveAllToStorage();
       }
     };
     el.addEventListener('pointerup', endDrag);
@@ -1280,6 +1295,7 @@ function renderEdges() {
       edges.splice(idx, 1);
       renderEdges();
       renderEditorLinks();
+      saveAllToStorage();
       setStatus('Связь удалена');
     };
     hit.addEventListener('click', removeEdge);
@@ -1325,6 +1341,7 @@ function startLinkDrag(fromId, e) {
       const toId = target.dataset.id;
       if (!edges.some(ed => ed.from === fromId && ed.to === toId)) {
         edges.push({ from: fromId, to: toId });
+        saveAllToStorage();
         setStatus('Связь создана');
       }
     }
@@ -1381,6 +1398,7 @@ function renderEditorLinks() {
       li.querySelector('button').addEventListener('click', () => {
         edges.splice(e.idx, 1);
         renderEdges(); renderEditorLinks();
+        saveAllToStorage();
         setStatus('Связь удалена');
       });
       inList.appendChild(li);
@@ -1399,6 +1417,7 @@ function renderEditorLinks() {
       li.querySelector('button').addEventListener('click', () => {
         edges.splice(e.idx, 1);
         renderEdges(); renderEditorLinks();
+        saveAllToStorage();
         setStatus('Связь удалена');
       });
       outList.appendChild(li);
@@ -1411,12 +1430,14 @@ document.getElementById('edit-title').addEventListener('input', e => {
   n.title = e.target.value;
   updateNodeVisual(n);
   renderDescSidebar();
+  saveAllToStorage();
 });
 document.getElementById('edit-type').addEventListener('change', e => {
   const n = getNode(selectedId); if (!n) return;
   n.type = e.target.value;
   updateNodeVisual(n);
   renderDescSidebar();
+  saveAllToStorage();
 });
 document.getElementById('edit-desc').addEventListener('input', e => {
   const n = getNode(selectedId); if (!n) return;
@@ -1428,6 +1449,7 @@ document.getElementById('edit-desc').addEventListener('input', e => {
     updateDescCounter();
     updateDescPreview();
   }
+  saveAllToStorage();
 });
 
 function updateNodeVisual(n) {
@@ -1451,6 +1473,7 @@ document.querySelectorAll('[data-add]').forEach(btn => {
     renderTree();
     selectNode(id);
     renderDescSidebar();
+    saveAllToStorage();
     setStatus('Узел добавлен');
   });
 });
@@ -1473,6 +1496,7 @@ document.getElementById('btn-delete').addEventListener('click', () => {
   renderTree();
   selectNode(null);
   renderDescSidebar();
+  saveAllToStorage();
   setStatus('Узел удалён');
 });
 
@@ -1502,6 +1526,7 @@ document.getElementById('link-ok').addEventListener('click', () => {
   else { from = to; target = selectedId; }
   if (!edges.some(e => e.from === from && e.to === target)) {
     edges.push({ from, to: target });
+    saveAllToStorage();
     setStatus('Связь создана');
   } else {
     setStatus('Такая связь уже есть');
@@ -1512,11 +1537,10 @@ document.getElementById('link-ok').addEventListener('click', () => {
 });
 
 document.getElementById('btn-save').addEventListener('click', () => {
-  localStorage.setItem('plotTree', JSON.stringify({ nodes, edges }));
-  setStatus('Сохранено в браузере');
+  saveAllToStorage(true);
 });
 document.getElementById('btn-load').addEventListener('click', () => {
-  const raw = localStorage.getItem('plotTree');
+  const raw = localStorage.getItem(STORAGE_KEY_TREE) || localStorage.getItem('plotTree');
   if (!raw) { setStatus('Нет сохранённых данных'); return; }
   try {
     const data = JSON.parse(raw);
@@ -1540,6 +1564,7 @@ document.getElementById('btn-clear').addEventListener('click', () => {
   descHeader.style.display = 'none';
   descBody.style.display = 'none';
   descEmpty.style.display = 'flex';
+  saveAllToStorage();
   setStatus('Очищено');
 });
 
@@ -1625,18 +1650,19 @@ descFullText.addEventListener('input', () => {
     const prev = truncateByWord(n.desc) || '— без описания —';
     descNodeList.children[idx].querySelector('.dn-preview').textContent = prev;
   }
+  saveAllToStorage();
 });
 
 /* ============================================================
    ТЕКСТ СЮЖЕТА — РАБОТА С ВЫДЕЛЕНИЕМ
 ============================================================ */
 (function restoreStoryText() {
-  const saved = localStorage.getItem('storyText');
+  const saved = localStorage.getItem(STORAGE_KEY_STORY) ?? localStorage.getItem('storyText');
   if (saved) storyEditor.innerText = saved;
 })();
 
 storyEditor.addEventListener('input', () => {
-  localStorage.setItem('storyText', storyEditor.innerText);
+  localStorage.setItem(STORAGE_KEY_STORY, storyEditor.innerText);
 });
 
 function captureSelection() {
@@ -1766,6 +1792,7 @@ document.getElementById('mn-save').addEventListener('click', () => {
   renderTree();
   selectNode(id);
   renderDescSidebar();
+  saveAllToStorage();
   setStatus('Узел создан из выделения');
 });
 
@@ -1804,6 +1831,7 @@ document.getElementById('ltn-ok').addEventListener('click', () => {
     updateDescPreview();
   }
   renderDescSidebar();
+  saveAllToStorage();
   setStatus('Выделение привязано к описанию узла');
 });
 
@@ -1828,7 +1856,7 @@ window.addEventListener('resize', renderEdges);
    ИНИЦИАЛИЗАЦИЯ
 ============================================================ */
 (function init() {
-  const raw = localStorage.getItem('plotTree');
+  const raw = localStorage.getItem(STORAGE_KEY_TREE) ?? localStorage.getItem('plotTree');
   if (raw) {
     try {
       const d = JSON.parse(raw);
@@ -1853,6 +1881,7 @@ window.addEventListener('resize', renderEdges);
       desc: 'Выбор пути.', x: 380, y: 320
     });
     edges.push({ from: startId, to: c1 }, { from: startId, to: c2 });
+    saveAllToStorage();
   }
   renderTree();
   renderDescSidebar();
