@@ -45,7 +45,7 @@
   .pane.active { display: flex; }
 
   /* ===== ДЕРЕВО ===== */
-  #tree-pane { flex-direction: row; position: relative; }
+  #tree-pane { flex-direction: row; position: relative; width: 100%; height: 100%; }
 
   #tree-canvas {
     flex: 1;
@@ -155,9 +155,18 @@
     padding: 18px;
     overflow-y: auto;
     flex-shrink: 0;
+    transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease, border-width 0.22s ease;
   }
   .toolbar.collapsed {
-    display: none;
+    width: 0;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    padding-left: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
   }
   .toolbar h3 {
     font-size: 13px;
@@ -169,12 +178,12 @@
   }
   .toolbar h3:first-child { margin-top: 0; }
 
-  /* Стрелка переключения панели — фиксирована поверх всего */
+  /* Фиксированная стрелка панели — никогда не пропадает при работе с узлами */
   #panel-toggle {
     position: fixed;
     top: 50%;
-    right: 263px;
-    transform: translateY(-50%);
+    right: 280px;
+    transform: translate(50%, -50%);
     width: 34px;
     height: 64px;
     background: #89b4fa;
@@ -189,32 +198,37 @@
     align-items: center;
     justify-content: center;
     z-index: 9999;
+    isolation: isolate;
+    pointer-events: auto;
     box-shadow: 0 4px 14px rgba(0,0,0,0.55);
     user-select: none;
     padding: 0;
     touch-action: manipulation;
+    transition: right 0.22s ease, background 0.15s;
   }
-  #panel-toggle.visible {
+  body.tree-active #panel-toggle {
     display: flex;
   }
   #panel-toggle.panel-closed {
-    right: 6px;
+    right: 0;
+    transform: translate(-15%, -50%);
   }
   #panel-toggle:hover { background: #a5c8ff; }
   #panel-toggle:active { background: #74a8f8; }
 
-  /* Кнопки масштаба — фиксированы поверх всего */
+  /* Фиксированные кнопки масштаба — всегда поверх холста на вкладке дерева */
   #zoom-controls {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
+    bottom: 16px;
+    left: 16px;
     display: none;
     flex-direction: column;
     gap: 8px;
-    z-index: 9999;
-    user-select: none;
+    z-index: 9998;
+    isolation: isolate;
+    pointer-events: auto;
   }
-  #zoom-controls.visible {
+  body.tree-active #zoom-controls {
     display: flex;
   }
   #zoom-controls button {
@@ -616,7 +630,7 @@
     align-items: center;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
     transition: transform 0.25s ease;
-    z-index: 5000;
+    z-index: 500;
     max-width: 92vw;
     flex-wrap: wrap;
     justify-content: center;
@@ -647,7 +661,7 @@
     width: 300px;
   }
   body.mobile #panel-toggle:not(.panel-closed) {
-    right: 283px;
+    right: 300px;
   }
   body.mobile .btn { padding: 13px 14px; font-size: 15px; }
   body.mobile .field input,
@@ -678,7 +692,7 @@
   body.mobile .desc-main-body textarea { font-size: 16px; min-height: 300px; }
 </style>
 </head>
-<body>
+<body class="tree-active">
 
 <div class="tabs">
   <div class="tab active" data-pane="tree">🌳 Дерево сюжета</div>
@@ -783,12 +797,12 @@
   </div>
 </div>
 
-<!-- Постоянные элементы управления деревом поверх всех слоёв -->
-<div id="panel-toggle" class="visible" title="Свернуть/развернуть панель">›</div>
-<div id="zoom-controls" class="visible">
-  <button id="zoom-in" title="Приблизить">+</button>
-  <button id="zoom-out" title="Отдалить">−</button>
-  <button id="zoom-reset" title="Сбросить масштаб" style="font-size:14px;">⟲</button>
+<!-- Фиксированные контролы дерева -->
+<div id="panel-toggle" title="Свернуть/развернуть панель">›</div>
+<div id="zoom-controls">
+  <button id="zoom-in" type="button" title="Приблизить">+</button>
+  <button id="zoom-out" type="button" title="Отдалить">−</button>
+  <button id="zoom-reset" type="button" title="Сбросить масштаб" style="font-size:14px;">⟲</button>
 </div>
 
 <div id="selection-banner">
@@ -928,7 +942,6 @@ const btnMake = document.getElementById('btn-make-node');
 const btnLink = document.getElementById('btn-link-to-node');
 const treeToolbar = document.getElementById('tree-toolbar');
 const panelToggle = document.getElementById('panel-toggle');
-const zoomControls = document.getElementById('zoom-controls');
 
 const descNodeList = document.getElementById('desc-node-list');
 const descHeader = document.getElementById('desc-header');
@@ -982,12 +995,6 @@ function truncateByWord(text) {
   return result + '…';
 }
 
-function syncTreeFloatingControls() {
-  const isTreeActive = document.getElementById('tree-pane').classList.contains('active');
-  panelToggle.classList.toggle('visible', isTreeActive);
-  zoomControls.classList.toggle('visible', isTreeActive);
-}
-
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -995,7 +1002,8 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(tab.dataset.pane + '-pane').classList.add('active');
 
-    syncTreeFloatingControls();
+    document.body.classList.toggle('tree-active', tab.dataset.pane === 'tree');
+
     if (tab.dataset.pane === 'tree') renderEdges();
     if (tab.dataset.pane === 'desc') renderDescSidebar();
   });
@@ -1013,7 +1021,7 @@ panelToggle.addEventListener('click', e => {
   treeToolbar.classList.toggle('collapsed', panelCollapsed);
   panelToggle.classList.toggle('panel-closed', panelCollapsed);
   panelToggle.textContent = panelCollapsed ? '‹' : '›';
-  renderEdges();
+  setTimeout(renderEdges, 250);
 });
 
 let view = { scale: 1, x: 0, y: 0 };
@@ -1165,7 +1173,6 @@ function renderTree() {
     el.addEventListener('pointerdown', e => {
       if (e.target.classList.contains('port')) return;
       e.stopPropagation();
-      el.setPointerCapture(e.pointerId);
       selectNode(n.id);
       draggedNode = el;
       draggedNodeStart = {
@@ -1176,7 +1183,7 @@ function renderTree() {
       el.classList.add('dragging');
     });
 
-    el.addEventListener('pointermove', e => {
+    const onDocMove = e => {
       if (draggedNode !== el || !draggedNodeStart) return;
       const dx = (e.clientX - draggedNodeStart.pointerX) / draggedNodeStart.scale;
       const dy = (e.clientY - draggedNodeStart.pointerY) / draggedNodeStart.scale;
@@ -1185,18 +1192,25 @@ function renderTree() {
       el.style.left = n.x + 'px';
       el.style.top = n.y + 'px';
       renderEdges();
-    });
+    };
 
-    const endDrag = () => {
+    const onDocUp = () => {
       if (draggedNode === el) {
         el.classList.remove('dragging');
         draggedNode = null;
         draggedNodeStart = null;
+        document.removeEventListener('pointermove', onDocMove);
+        document.removeEventListener('pointerup', onDocUp);
+        document.removeEventListener('pointercancel', onDocUp);
         saveAllToStorage();
       }
     };
-    el.addEventListener('pointerup', endDrag);
-    el.addEventListener('pointercancel', endDrag);
+
+    el.addEventListener('pointerdown', () => {
+      document.addEventListener('pointermove', onDocMove);
+      document.addEventListener('pointerup', onDocUp);
+      document.addEventListener('pointercancel', onDocUp);
+    });
 
     const outPort = el.querySelector('.port.out');
     outPort.addEventListener('pointerdown', e => {
@@ -1863,7 +1877,6 @@ window.addEventListener('resize', renderEdges);
     edges.push({ from: startId, to: c1 }, { from: startId, to: c2 });
     saveAllToStorage();
   }
-  syncTreeFloatingControls();
   renderTree();
   renderDescSidebar();
 })();
