@@ -183,28 +183,29 @@
     top: 50%;
     right: 280px;
     transform: translate(50%, -50%);
-    width: 30px;
-    height: 60px;
+    width: 34px;
+    height: 64px;
     background: #89b4fa;
     color: #1e1e2e;
     border: 2px solid #1e1e2e;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     line-height: 1;
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    z-index: 30;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    z-index: 40;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.55);
     user-select: none;
     padding: 0;
+    touch-action: manipulation;
     transition: right 0.22s ease, background 0.15s;
   }
   #panel-toggle.panel-closed {
     right: 0;
-    transform: translate(-25%, -50%);
+    transform: translate(-15%, -50%);
   }
   #panel-toggle:hover { background: #a5c8ff; }
   #panel-toggle:active { background: #74a8f8; }
@@ -655,17 +656,12 @@
     position: absolute;
     bottom: 16px;
     left: 16px;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     gap: 8px;
-    z-index: 15;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  body.mobile #zoom-controls {
-    opacity: 1;
-    pointer-events: auto;
+    z-index: 35;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
   #zoom-controls button {
     width: 46px; height: 46px;
@@ -681,6 +677,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
   }
   #zoom-controls button:active { background: #45475a; }
 </style>
@@ -901,9 +898,6 @@
 </div>
 
 <script>
-/* ============================================================
-   ОПРЕДЕЛЕНИЕ МОБИЛЬНОГО УСТРОЙСТВА
-============================================================ */
 const isMobile = (() => {
   const ua = /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent);
   const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
@@ -912,9 +906,6 @@ const isMobile = (() => {
 })();
 if (isMobile) document.body.classList.add('mobile');
 
-/* ============================================================
-   МОДЕЛЬ И АВТОСОХРАНЕНИЕ
-============================================================ */
 const STORAGE_KEY_TREE = 'plotTree_v2';
 const STORAGE_KEY_STORY = 'storyText_v2';
 
@@ -976,9 +967,6 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-/* ============================================================
-   ОБРЕЗКА ДО 20 СИМВОЛОВ ПО ГРАНИЦЕ СЛОВА
-============================================================ */
 const DESC_MAX = 20;
 function truncateByWord(text) {
   const s = String(text || '').replace(/\s+/g, ' ').trim();
@@ -996,9 +984,6 @@ function truncateByWord(text) {
   return result + '…';
 }
 
-/* ============================================================
-   ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
-============================================================ */
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1011,10 +996,11 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-/* ============================================================
-   СВОРАЧИВАНИЕ / РАЗВОРАЧИВАНИЕ ПРАВОЙ ПАНЕЛИ ПО СТРЕЛОЧКЕ
-============================================================ */
 let panelCollapsed = false;
+
+panelToggle.addEventListener('pointerdown', e => {
+  e.stopPropagation();
+});
 
 panelToggle.addEventListener('click', e => {
   e.stopPropagation();
@@ -1025,9 +1011,6 @@ panelToggle.addEventListener('click', e => {
   setTimeout(renderEdges, 250);
 });
 
-/* ============================================================
-   МАСШТАБ И ПАНОРАМА ПОЛЯ С УЗЛАМИ
-============================================================ */
 let view = { scale: 1, x: 0, y: 0 };
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 3;
@@ -1059,15 +1042,20 @@ treeCanvas.addEventListener('wheel', e => {
   zoomAt(e.clientX, e.clientY, factor);
 }, { passive: false });
 
-document.getElementById('zoom-in').addEventListener('click', () => {
+document.getElementById('zoom-in').addEventListener('click', e => {
+  e.stopPropagation();
   const r = treeCanvas.getBoundingClientRect();
   zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.25);
 });
-document.getElementById('zoom-out').addEventListener('click', () => {
+document.getElementById('zoom-out').addEventListener('click', e => {
+  e.stopPropagation();
   const r = treeCanvas.getBoundingClientRect();
   zoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / 1.25);
 });
-document.getElementById('zoom-reset').addEventListener('click', resetView);
+document.getElementById('zoom-reset').addEventListener('click', e => {
+  e.stopPropagation();
+  resetView();
+});
 
 const pointers = new Map();
 let pinchStart = null;
@@ -1078,6 +1066,7 @@ let draggedNodeStart = null;
 treeCanvas.addEventListener('pointerdown', e => {
   if (e.target.closest('.node')) return;
   if (e.target.closest('#zoom-controls')) return;
+  if (e.target.closest('#panel-toggle')) return;
 
   treeCanvas.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1143,9 +1132,6 @@ treeCanvas.addEventListener('pointerleave', e => {
   if (!treeCanvas.hasPointerCapture?.(e.pointerId)) endPointer(e);
 });
 
-/* ============================================================
-   РЕНДЕР ДЕРЕВА
-============================================================ */
 function renderTree() {
   [...treeInner.querySelectorAll('.node')].forEach(el => el.remove());
 
@@ -1216,9 +1202,6 @@ function renderTree() {
   renderEdges();
 }
 
-/* ============================================================
-   СВЯЗИ
-============================================================ */
 function renderEdges() {
   svg.innerHTML = `
     <defs>
@@ -1354,9 +1337,6 @@ function startLinkDrag(fromId, e) {
   document.addEventListener('pointercancel', onUp);
 }
 
-/* ============================================================
-   ВЫБОР УЗЛА / РЕДАКТОР
-============================================================ */
 function selectNode(id) {
   selectedId = id;
   document.querySelectorAll('.node').forEach(el => {
@@ -1568,9 +1548,6 @@ document.getElementById('btn-clear').addEventListener('click', () => {
   setStatus('Очищено');
 });
 
-/* ============================================================
-   ОПИСАНИЯ УЗЛОВ
-============================================================ */
 function renderDescSidebar() {
   descNodeList.innerHTML = '';
   if (nodes.length === 0) {
@@ -1653,9 +1630,6 @@ descFullText.addEventListener('input', () => {
   saveAllToStorage();
 });
 
-/* ============================================================
-   ТЕКСТ СЮЖЕТА — РАБОТА С ВЫДЕЛЕНИЕМ
-============================================================ */
 (function restoreStoryText() {
   const saved = localStorage.getItem(STORAGE_KEY_STORY) ?? localStorage.getItem('storyText');
   if (saved) storyEditor.innerText = saved;
@@ -1852,9 +1826,6 @@ document.getElementById('story-export').addEventListener('click', () => {
 
 window.addEventListener('resize', renderEdges);
 
-/* ============================================================
-   ИНИЦИАЛИЗАЦИЯ
-============================================================ */
 (function init() {
   const raw = localStorage.getItem(STORAGE_KEY_TREE) ?? localStorage.getItem('plotTree');
   if (raw) {
