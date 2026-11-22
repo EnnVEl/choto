@@ -146,7 +146,7 @@
   .port.out:hover { transform: translateY(-50%) scale(1.2); }
   .port.in { left: -11px; top: 50%; transform: translateY(-50%); pointer-events: none; }
 
-  /* ===== ПРАВАЯ ПАНЕЛЬ И СТРЕЛКА ===== */
+  /* ===== ПРАВАЯ ПАНЕЛЬ ===== */
   .toolbar {
     width: 280px;
     height: 100%;
@@ -155,18 +155,9 @@
     padding: 18px;
     overflow-y: auto;
     flex-shrink: 0;
-    transition: width 0.22s ease, padding 0.22s ease, opacity 0.22s ease, border-width 0.22s ease;
   }
   .toolbar.collapsed {
-    width: 0;
-    padding-top: 18px;
-    padding-bottom: 18px;
-    padding-left: 0;
-    padding-right: 0;
-    border-left-width: 0;
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
+    display: none;
   }
   .toolbar h3 {
     font-size: 13px;
@@ -178,11 +169,12 @@
   }
   .toolbar h3:first-child { margin-top: 0; }
 
+  /* Стрелка переключения панели — фиксирована поверх всего */
   #panel-toggle {
-    position: absolute;
+    position: fixed;
     top: 50%;
-    right: 280px;
-    transform: translate(50%, -50%);
+    right: 263px;
+    transform: translateY(-50%);
     width: 34px;
     height: 64px;
     background: #89b4fa;
@@ -193,22 +185,55 @@
     font-size: 22px;
     font-weight: 700;
     line-height: 1;
-    display: flex !important;
+    display: none;
     align-items: center;
     justify-content: center;
-    z-index: 40;
+    z-index: 9999;
     box-shadow: 0 4px 14px rgba(0,0,0,0.55);
     user-select: none;
     padding: 0;
     touch-action: manipulation;
-    transition: right 0.22s ease, background 0.15s;
+  }
+  #panel-toggle.visible {
+    display: flex;
   }
   #panel-toggle.panel-closed {
-    right: 0;
-    transform: translate(-15%, -50%);
+    right: 6px;
   }
   #panel-toggle:hover { background: #a5c8ff; }
   #panel-toggle:active { background: #74a8f8; }
+
+  /* Кнопки масштаба — фиксированы поверх всего */
+  #zoom-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+    user-select: none;
+  }
+  #zoom-controls.visible {
+    display: flex;
+  }
+  #zoom-controls button {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    background: #313244;
+    border: 2px solid #45475a;
+    color: #cdd6f4;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  #zoom-controls button:active { background: #45475a; }
 
   .btn {
     display: block;
@@ -553,7 +578,7 @@
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
     padding: 16px;
   }
   .modal-overlay.active { display: flex; }
@@ -591,7 +616,7 @@
     align-items: center;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
     transition: transform 0.25s ease;
-    z-index: 500;
+    z-index: 5000;
     max-width: 92vw;
     flex-wrap: wrap;
     justify-content: center;
@@ -622,7 +647,7 @@
     width: 300px;
   }
   body.mobile #panel-toggle:not(.panel-closed) {
-    right: 300px;
+    right: 283px;
   }
   body.mobile .btn { padding: 13px 14px; font-size: 15px; }
   body.mobile .field input,
@@ -651,35 +676,6 @@
   body.mobile .desc-main-header .dmh-title { font-size: 15px; }
   body.mobile .desc-main-body { padding: 16px; }
   body.mobile .desc-main-body textarea { font-size: 16px; min-height: 300px; }
-
-  #zoom-controls {
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    display: flex !important;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 35;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-  }
-  #zoom-controls button {
-    width: 46px; height: 46px;
-    border-radius: 12px;
-    background: #313244;
-    border: 2px solid #45475a;
-    color: #cdd6f4;
-    font-size: 22px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-  }
-  #zoom-controls button:active { background: #45475a; }
 </style>
 </head>
 <body>
@@ -699,14 +695,7 @@
           <svg id="edges"></svg>
         </div>
       </div>
-      <div id="zoom-controls">
-        <button id="zoom-in" title="Приблизить">+</button>
-        <button id="zoom-out" title="Отдалить">−</button>
-        <button id="zoom-reset" title="Сбросить масштаб" style="font-size:14px;">⟲</button>
-      </div>
     </div>
-
-    <div id="panel-toggle" title="Свернуть/развернуть панель">›</div>
 
     <div class="toolbar" id="tree-toolbar">
       <h3>Добавить узел</h3>
@@ -792,6 +781,14 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Постоянные элементы управления деревом поверх всех слоёв -->
+<div id="panel-toggle" class="visible" title="Свернуть/развернуть панель">›</div>
+<div id="zoom-controls" class="visible">
+  <button id="zoom-in" title="Приблизить">+</button>
+  <button id="zoom-out" title="Отдалить">−</button>
+  <button id="zoom-reset" title="Сбросить масштаб" style="font-size:14px;">⟲</button>
 </div>
 
 <div id="selection-banner">
@@ -931,6 +928,7 @@ const btnMake = document.getElementById('btn-make-node');
 const btnLink = document.getElementById('btn-link-to-node');
 const treeToolbar = document.getElementById('tree-toolbar');
 const panelToggle = document.getElementById('panel-toggle');
+const zoomControls = document.getElementById('zoom-controls');
 
 const descNodeList = document.getElementById('desc-node-list');
 const descHeader = document.getElementById('desc-header');
@@ -984,6 +982,12 @@ function truncateByWord(text) {
   return result + '…';
 }
 
+function syncTreeFloatingControls() {
+  const isTreeActive = document.getElementById('tree-pane').classList.contains('active');
+  panelToggle.classList.toggle('visible', isTreeActive);
+  zoomControls.classList.toggle('visible', isTreeActive);
+}
+
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -991,6 +995,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(tab.dataset.pane + '-pane').classList.add('active');
 
+    syncTreeFloatingControls();
     if (tab.dataset.pane === 'tree') renderEdges();
     if (tab.dataset.pane === 'desc') renderDescSidebar();
   });
@@ -1008,7 +1013,7 @@ panelToggle.addEventListener('click', e => {
   treeToolbar.classList.toggle('collapsed', panelCollapsed);
   panelToggle.classList.toggle('panel-closed', panelCollapsed);
   panelToggle.textContent = panelCollapsed ? '‹' : '›';
-  setTimeout(renderEdges, 250);
+  renderEdges();
 });
 
 let view = { scale: 1, x: 0, y: 0 };
@@ -1041,6 +1046,10 @@ treeCanvas.addEventListener('wheel', e => {
   const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
   zoomAt(e.clientX, e.clientY, factor);
 }, { passive: false });
+
+document.getElementById('zoom-in').addEventListener('pointerdown', e => e.stopPropagation());
+document.getElementById('zoom-out').addEventListener('pointerdown', e => e.stopPropagation());
+document.getElementById('zoom-reset').addEventListener('pointerdown', e => e.stopPropagation());
 
 document.getElementById('zoom-in').addEventListener('click', e => {
   e.stopPropagation();
@@ -1854,6 +1863,7 @@ window.addEventListener('resize', renderEdges);
     edges.push({ from: startId, to: c1 }, { from: startId, to: c2 });
     saveAllToStorage();
   }
+  syncTreeFloatingControls();
   renderTree();
   renderDescSidebar();
 })();
