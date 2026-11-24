@@ -25,27 +25,38 @@
     flex-shrink: 0;
   }
 
+  .projects-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #11111b;
+    border-bottom: 1px solid #313244;
+  }
+
   .projects-strip {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
-    background: #11111b;
-    border-bottom: 1px solid #313244;
     overflow-x: auto;
     scrollbar-width: thin;
+    flex: 1;
+    min-width: 0;
+    padding-bottom: 2px;
   }
 
-  .projects-spacer {
-    flex: 1;
-    min-width: 10px;
+  .project-io-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
   }
 
   .project-tab {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 14px;
+    gap: 6px;
+    padding: 7px 12px;
     border-radius: 8px;
     background: #1e1e2e;
     border: 1px solid #313244;
@@ -70,7 +81,7 @@
   .project-tab .pt-actions {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
   }
   .project-tab .pt-btn {
     border: none;
@@ -92,26 +103,29 @@
   }
 
   .project-add-btn, .project-io-btn {
-    padding: 7px 12px;
+    padding: 7px 11px;
     border-radius: 8px;
-    border: 1px dashed #45475a;
-    background: transparent;
-    color: #89b4fa;
     font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
     transition: all 0.15s;
+    touch-action: manipulation;
+  }
+  .project-add-btn {
+    border: 1px dashed #89b4fa;
+    background: rgba(137, 180, 250, 0.08);
+    color: #89b4fa;
   }
   .project-add-btn:hover {
-    background: #1e1e2e;
+    background: #89b4fa;
+    color: #1e1e2e;
     border-style: solid;
-    border-color: #89b4fa;
   }
   .project-io-btn {
-    border: 1px solid #313244;
-    background: #1e1e2e;
+    border: 1px solid #45475a;
+    background: #313244;
     color: #cdd6f4;
   }
   .project-io-btn:hover {
@@ -123,9 +137,10 @@
     display: flex;
     background: #181825;
     flex-shrink: 0;
+    overflow-x: auto;
   }
   .tab {
-    padding: 12px 24px;
+    padding: 12px 22px;
     cursor: pointer;
     font-size: 14.5px;
     font-weight: 600;
@@ -282,7 +297,7 @@
 
   #panel-toggle {
     position: fixed;
-    top: 55%;
+    top: 56%;
     right: 280px;
     transform: translate(50%, -50%);
     width: 34px;
@@ -688,7 +703,7 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.65);
     display: none;
     align-items: center;
     justify-content: center;
@@ -698,23 +713,24 @@
   .modal-overlay.active { display: flex; }
   .modal {
     background: #313244;
-    padding: 24px;
+    padding: 22px;
     border-radius: 12px;
-    width: 460px;
+    width: 480px;
     max-width: 100%;
     max-height: 85vh;
     overflow-y: auto;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     -webkit-overflow-scrolling: touch;
   }
-  .modal h3 { margin-bottom: 16px; color: #f5e0dc; }
+  .modal h3 { margin-bottom: 14px; color: #f5e0dc; }
   .modal .field textarea { min-height: 100px; }
   .modal-actions {
     display: flex;
     gap: 10px;
-    margin-top: 16px;
+    margin-top: 14px;
+    flex-wrap: wrap;
   }
-  .modal-actions .btn { flex: 1; margin: 0; text-align: center; }
+  .modal-actions .btn { flex: 1; margin: 0; text-align: center; min-width: 110px; }
 
   #selection-banner {
     position: fixed;
@@ -752,9 +768,32 @@
   }
 
   /* ============================================================
-     МОБИЛЬНАЯ ВЕРСИЯ
+     МОБИЛЬНАЯ ВЕРСИЯ — ВСЕ КНОПКИ ЭКСПОРТА/ИМПОРТА НА ЭКРАНЕ
   ============================================================ */
-  body.mobile .tab { padding: 12px 14px; font-size: 13.5px; }
+  @media (max-width: 820px) {
+    .projects-bar {
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 6px 8px;
+    }
+    .projects-strip {
+      flex: 1 1 100%;
+      order: 1;
+    }
+    .project-io-group {
+      flex: 1 1 100%;
+      order: 2;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .project-add-btn, .project-io-btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 8px;
+      font-size: 12px;
+    }
+    .tab { padding: 10px 12px; font-size: 13px; flex: 1; text-align: center; }
+  }
 
   body.mobile .toolbar:not(.collapsed) {
     width: 300px;
@@ -762,7 +801,7 @@
   body.mobile #panel-toggle:not(.panel-closed) {
     right: 300px;
   }
-  body.mobile .btn { padding: 13px 14px; font-size: 15px; }
+  body.mobile .btn { padding: 12px 14px; font-size: 14.5px; }
   body.mobile .field input,
   body.mobile .field textarea,
   body.mobile .field select { font-size: 16px; padding: 12px; }
@@ -772,7 +811,7 @@
     padding: 10px 12px;
     gap: 8px;
   }
-  body.mobile .story-toolbar .btn { padding: 12px 14px; font-size: 14px; }
+  body.mobile .story-toolbar .btn { padding: 10px 12px; font-size: 13.5px; }
   body.mobile .story-toolbar .selected-info { display: none; }
 
   body.mobile #story-editor-wrap { padding: 16px 10px; }
@@ -794,18 +833,20 @@
 <body class="tree-active">
 
 <div class="top-bar">
-  <div class="projects-strip" id="projects-strip">
-    <button class="project-add-btn" id="btn-new-project" type="button">＋ Новый сюжет</button>
-    <div class="projects-spacer"></div>
-    <button class="project-io-btn" id="btn-export-all" type="button" title="Скачать все сюжеты одним JSON-файлом">📦 Экспорт всех</button>
-    <button class="project-io-btn" id="btn-import-all" type="button" title="Загрузить сюжеты из JSON-файла">📥 Импорт</button>
-    <input type="file" id="import-file-input" accept=".json,application/json" style="display:none;">
+  <div class="projects-bar">
+    <div class="projects-strip" id="projects-strip"></div>
+    <div class="project-io-group">
+      <button class="project-add-btn" id="btn-new-project" type="button">＋ Сюжет</button>
+      <button class="project-io-btn" id="btn-export-all" type="button" title="Экспортировать все сюжеты в JSON">📦 Экспорт</button>
+      <button class="project-io-btn" id="btn-import-all" type="button" title="Импортировать сюжеты из JSON">📥 Импорт</button>
+    </div>
+    <input type="file" id="import-file-input" accept=".json,application/json,text/plain,*/*" style="display:none;">
   </div>
 
   <div class="tabs">
-    <div class="tab active" data-pane="tree">🌳 Дерево сюжета</div>
-    <div class="tab" data-pane="story">📖 Текст сюжета</div>
-    <div class="tab" data-pane="desc">📝 Описания узлов</div>
+    <div class="tab active" data-pane="tree">🌳 Дерево</div>
+    <div class="tab" data-pane="story">📖 Текст</div>
+    <div class="tab" data-pane="desc">📝 Описания</div>
   </div>
 </div>
 
@@ -872,7 +913,7 @@
       <button class="btn success" id="btn-link-to-node" disabled>🔗 Привязать к узлу</button>
       <span class="selected-info" id="sel-info">Выделите текст для действий</span>
       <div class="spacer"></div>
-      <button class="btn" id="story-export">⬇ Экспорт JSON</button>
+      <button class="btn" id="story-export">⬇ Экспорт текущего JSON</button>
     </div>
     <div id="story-editor-wrap">
       <div id="story-editor" contenteditable="true"
@@ -919,6 +960,21 @@
   <button class="btn primary" id="sb-make">＋ Узел</button>
   <button class="btn success" id="sb-link">🔗 Привязать</button>
   <button class="btn" id="sb-cancel">✕</button>
+</div>
+
+<!-- Модалка резервного экспорта / копирования JSON на телефонах -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <h3 id="export-modal-title">Экспорт JSON</h3>
+    <p class="hint" style="margin-bottom:10px;">Скопируйте текст ниже или сохраните в файл, чтобы перенести на другое устройство.</p>
+    <div class="field">
+      <textarea id="export-json-box" readonly style="min-height:180px;font-family:monospace;font-size:12px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn success" id="export-copy-btn" type="button">📋 Копировать</button>
+      <button class="btn primary" id="export-close-btn" type="button">Готово</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal">
@@ -1046,11 +1102,16 @@ let savedSelectionText = '';
 let savedRange = null;
 
 const projectsStrip = document.getElementById('projects-strip');
-const projectsSpacer = projectsStrip.querySelector('.projects-spacer');
 const btnNewProject = document.getElementById('btn-new-project');
 const btnExportAll = document.getElementById('btn-export-all');
 const btnImportAll = document.getElementById('btn-import-all');
 const importFileInput = document.getElementById('import-file-input');
+
+const exportModal = document.getElementById('export-modal');
+const exportModalTitle = document.getElementById('export-modal-title');
+const exportJsonBox = document.getElementById('export-json-box');
+const exportCopyBtn = document.getElementById('export-copy-btn');
+const exportCloseBtn = document.getElementById('export-close-btn');
 
 const treeCanvas = document.getElementById('tree-canvas');
 const treeViewport = document.getElementById('tree-viewport');
@@ -1085,7 +1146,7 @@ const getNode = id => nodes.find(n => n.id === id);
 const typeLabel = { event: 'Событие', choice: 'Выбор', branch: 'Ветка' };
 const typeBadge = { event: 'badge-event', choice: 'badge-choice', branch: 'badge-branch' };
 
-function setStatus(msg, timeout = 3000) {
+function setStatus(msg, timeout = 3500) {
   statusEl.textContent = msg;
   clearTimeout(setStatus._t);
   setStatus._t = setTimeout(() => statusEl.textContent = '', timeout);
@@ -1158,7 +1219,7 @@ function loadProjectIntoEditor(id) {
 }
 
 function renderProjectsStrip() {
-  [...projectsStrip.querySelectorAll('.project-tab')].forEach(el => el.remove());
+  projectsStrip.innerHTML = '';
 
   projects.forEach(p => {
     const tab = document.createElement('div');
@@ -1220,7 +1281,7 @@ function renderProjectsStrip() {
       loadProjectIntoEditor(p.id);
     });
 
-    projectsStrip.insertBefore(tab, projectsSpacer);
+    projectsStrip.appendChild(tab);
   });
 }
 
@@ -1245,8 +1306,52 @@ btnNewProject.addEventListener('click', () => {
 });
 
 /* ============================================================
-   ЭКСПОРТ И ИМПОРТ ВСЕХ СЮЖЕТОВ ОДНИМ ФАЙЛОМ
+   ЭКСПОРТ И ИМПОРТ ВСЕХ СЮЖЕТОВ (С РЕЗЕРВОМ ДЛЯ МОБИЛЬНЫХ)
 ============================================================ */
+function triggerDownloadOrModal(jsonStr, filename, modalTitle) {
+  try {
+    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+  } catch (e) {}
+
+  exportModalTitle.textContent = modalTitle;
+  exportJsonBox.value = jsonStr;
+  exportModal.classList.add('active');
+}
+
+exportCopyBtn.addEventListener('click', async () => {
+  const val = exportJsonBox.value;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(val);
+      setStatus('JSON скопирован в буфер обмена');
+      return;
+    }
+  } catch (e) {}
+  exportJsonBox.focus();
+  exportJsonBox.select();
+  try {
+    document.execCommand('copy');
+    setStatus('JSON скопирован');
+  } catch (e) {
+    setStatus('Выделите текст и скопируйте вручную');
+  }
+});
+
+exportCloseBtn.addEventListener('click', () => {
+  exportModal.classList.remove('active');
+});
+
 function cloneProjectWithFreshIds(rawProj, fallbackIdx = 1) {
   const idMap = new Map();
   const rawNodes = Array.isArray(rawProj.nodes) ? rawProj.nodes : [];
@@ -1289,13 +1394,11 @@ btnExportAll.addEventListener('click', () => {
     activeProjectId,
     projects
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `all-stories-${dateStr}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  triggerDownloadOrModal(
+    JSON.stringify(payload, null, 2),
+    `all-stories-${dateStr}.json`,
+    `Экспорт всех сюжетов (${projects.length})`
+  );
   setStatus(`Экспортировано сюжетов: ${projects.length}`);
 });
 
@@ -1951,7 +2054,7 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 function renderDescSidebar() {
   descNodeList.innerHTML = '';
   if (nodes.length === 0) {
-    descNodeList.innerHTML = '<div class="desc-sidebar-empty">Нет узлов. Добавьте их на вкладке «Дерево сюжета».</div>';
+    descNodeList.innerHTML = '<div class="desc-sidebar-empty">Нет узлов. Добавьте их на вкладке «Дерево».</div>';
     return;
   }
   nodes.forEach(n => {
@@ -2207,19 +2310,14 @@ document.getElementById('ltn-ok').addEventListener('click', () => {
 document.getElementById('story-export').addEventListener('click', () => {
   syncCurrentToProject();
   const cur = getProject(activeProjectId);
+  const safeName = (cur && cur.name ? cur.name : 'plot-tree').replace(/[^\wа-яА-ЯёЁ-]+/g, '_');
   const data = JSON.stringify({
     projectName: cur ? cur.name : 'Сюжет',
     nodes,
     edges,
     storyText: storyEditor.innerText
   }, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${(cur && cur.name ? cur.name : 'plot-tree').replace(/[^\wа-яА-ЯёЁ-]+/g, '_')}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  triggerDownloadOrModal(data, `${safeName}.json`, `Экспорт: ${cur ? cur.name : 'Сюжет'}`);
   setStatus('Экспортировано');
 });
 
