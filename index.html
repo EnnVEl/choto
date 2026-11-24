@@ -16,16 +16,118 @@
   }
   body { display: flex; flex-direction: column; }
 
-  .tabs {
+  /* ===== ВЕРХНЯЯ ПАНЕЛЬ СЮЖЕТОВ И ВКЛАДОК ===== */
+  .top-bar {
     display: flex;
+    flex-direction: column;
     background: #181825;
     border-bottom: 2px solid #313244;
     flex-shrink: 0;
   }
-  .tab {
-    padding: 14px 28px;
+
+  .projects-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #11111b;
+    border-bottom: 1px solid #313244;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .projects-spacer {
+    flex: 1;
+    min-width: 10px;
+  }
+
+  .project-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: #1e1e2e;
+    border: 1px solid #313244;
+    color: #a6adc8;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 15px;
+    white-space: nowrap;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .project-tab:hover {
+    border-color: #89b4fa;
+    color: #cdd6f4;
+  }
+  .project-tab.active {
+    background: #313244;
+    border-color: #89b4fa;
+    color: #f5e0dc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  }
+  .project-tab .pt-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .project-tab .pt-btn {
+    border: none;
+    background: transparent;
+    color: #7f849c;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .project-tab .pt-btn:hover {
+    background: #45475a;
+    color: #f5e0dc;
+  }
+  .project-tab .pt-btn.del:hover {
+    background: #f38ba8;
+    color: #1e1e2e;
+  }
+
+  .project-add-btn, .project-io-btn {
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px dashed #45475a;
+    background: transparent;
+    color: #89b4fa;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .project-add-btn:hover {
+    background: #1e1e2e;
+    border-style: solid;
+    border-color: #89b4fa;
+  }
+  .project-io-btn {
+    border: 1px solid #313244;
+    background: #1e1e2e;
+    color: #cdd6f4;
+  }
+  .project-io-btn:hover {
+    border-color: #a6e3a1;
+    color: #a6e3a1;
+  }
+
+  .tabs {
+    display: flex;
+    background: #181825;
+    flex-shrink: 0;
+  }
+  .tab {
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 14.5px;
     font-weight: 600;
     color: #7f849c;
     border-bottom: 3px solid transparent;
@@ -178,10 +280,9 @@
   }
   .toolbar h3:first-child { margin-top: 0; }
 
-  /* Фиксированная стрелка панели — никогда не пропадает при работе с узлами */
   #panel-toggle {
     position: fixed;
-    top: 50%;
+    top: 55%;
     right: 280px;
     transform: translate(50%, -50%);
     width: 34px;
@@ -216,7 +317,6 @@
   #panel-toggle:hover { background: #a5c8ff; }
   #panel-toggle:active { background: #74a8f8; }
 
-  /* Фиксированные кнопки масштаба — всегда поверх холста на вкладке дерева */
   #zoom-controls {
     position: fixed;
     bottom: 16px;
@@ -654,8 +754,7 @@
   /* ============================================================
      МОБИЛЬНАЯ ВЕРСИЯ
   ============================================================ */
-  body.mobile .tabs { overflow-x: auto; }
-  body.mobile .tab { padding: 14px 16px; font-size: 14px; }
+  body.mobile .tab { padding: 12px 14px; font-size: 13.5px; }
 
   body.mobile .toolbar:not(.collapsed) {
     width: 300px;
@@ -694,10 +793,20 @@
 </head>
 <body class="tree-active">
 
-<div class="tabs">
-  <div class="tab active" data-pane="tree">🌳 Дерево сюжета</div>
-  <div class="tab" data-pane="story">📖 Текст сюжета</div>
-  <div class="tab" data-pane="desc">📝 Описания узлов</div>
+<div class="top-bar">
+  <div class="projects-strip" id="projects-strip">
+    <button class="project-add-btn" id="btn-new-project" type="button">＋ Новый сюжет</button>
+    <div class="projects-spacer"></div>
+    <button class="project-io-btn" id="btn-export-all" type="button" title="Скачать все сюжеты одним JSON-файлом">📦 Экспорт всех</button>
+    <button class="project-io-btn" id="btn-import-all" type="button" title="Загрузить сюжеты из JSON-файла">📥 Импорт</button>
+    <input type="file" id="import-file-input" accept=".json,application/json" style="display:none;">
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-pane="tree">🌳 Дерево сюжета</div>
+    <div class="tab" data-pane="story">📖 Текст сюжета</div>
+    <div class="tab" data-pane="desc">📝 Описания узлов</div>
+  </div>
 </div>
 
 <div class="content">
@@ -751,7 +860,7 @@
       <h3>Действия</h3>
       <button class="btn" id="btn-save">💾 Сохранить в браузере</button>
       <button class="btn" id="btn-load">📂 Загрузить</button>
-      <button class="btn danger" id="btn-clear">🗑 Очистить всё</button>
+      <button class="btn danger" id="btn-clear">🗑 Очистить сюжет</button>
       <p class="hint" id="status"></p>
     </div>
   </div>
@@ -917,8 +1026,17 @@ const isMobile = (() => {
 })();
 if (isMobile) document.body.classList.add('mobile');
 
-const STORAGE_KEY_TREE = 'plotTree_v2';
-const STORAGE_KEY_STORY = 'storyText_v2';
+/* ============================================================
+   МНОГОСЮЖЕТНАЯ МОДЕЛЬ, ИМПОРТ/ЭКСПОРТ И МИГРАЦИЯ
+============================================================ */
+const STORAGE_KEY_PROJECTS = 'plotTree_projects_v1';
+const STORAGE_KEY_ACTIVE = 'plotTree_activeProject_v1';
+
+const LEGACY_TREE_KEYS = ['plotTree_v2', 'plotTree'];
+const LEGACY_STORY_KEYS = ['storyText_v2', 'storyText'];
+
+let projects = [];
+let activeProjectId = null;
 
 let nodes = [];
 let edges = [];
@@ -926,6 +1044,13 @@ let selectedId = null;
 
 let savedSelectionText = '';
 let savedRange = null;
+
+const projectsStrip = document.getElementById('projects-strip');
+const projectsSpacer = projectsStrip.querySelector('.projects-spacer');
+const btnNewProject = document.getElementById('btn-new-project');
+const btnExportAll = document.getElementById('btn-export-all');
+const btnImportAll = document.getElementById('btn-import-all');
+const importFileInput = document.getElementById('import-file-input');
 
 const treeCanvas = document.getElementById('tree-canvas');
 const treeViewport = document.getElementById('tree-viewport');
@@ -954,30 +1079,280 @@ const descPreview = document.getElementById('desc-preview');
 let descSelectedId = null;
 
 const uid = () => 'n' + Date.now() + Math.random().toString(36).slice(2, 7);
+const pid = () => 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+const getProject = id => projects.find(p => p.id === id);
 const getNode = id => nodes.find(n => n.id === id);
 const typeLabel = { event: 'Событие', choice: 'Выбор', branch: 'Ветка' };
 const typeBadge = { event: 'badge-event', choice: 'badge-choice', branch: 'badge-branch' };
 
-function setStatus(msg, timeout = 2500) {
+function setStatus(msg, timeout = 3000) {
   statusEl.textContent = msg;
   clearTimeout(setStatus._t);
   setStatus._t = setTimeout(() => statusEl.textContent = '', timeout);
-}
-
-function saveAllToStorage(showMsg = false) {
-  try {
-    localStorage.setItem(STORAGE_KEY_TREE, JSON.stringify({ nodes, edges }));
-    localStorage.setItem(STORAGE_KEY_STORY, storyEditor.innerText);
-    if (showMsg) setStatus('Сохранено в браузере');
-  } catch (e) {
-    if (showMsg) setStatus('Ошибка сохранения');
-  }
 }
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function createDefaultNodes() {
+  const startId = uid();
+  const c1 = uid();
+  const c2 = uid();
+  return {
+    nodes: [
+      { id: startId, title: 'Начало истории', type: 'event', desc: 'Герой просыпается в незнакомом месте.', x: 80, y: 200 },
+      { id: c1, title: 'Пойти налево', type: 'choice', desc: 'Выбор пути.', x: 380, y: 80 },
+      { id: c2, title: 'Пойти направо', type: 'choice', desc: 'Выбор пути.', x: 380, y: 320 }
+    ],
+    edges: [
+      { from: startId, to: c1 },
+      { from: startId, to: c2 }
+    ]
+  };
+}
+
+function syncCurrentToProject() {
+  const proj = getProject(activeProjectId);
+  if (!proj) return;
+  proj.nodes = nodes.map(n => ({ ...n }));
+  proj.edges = edges.map(e => ({ ...e }));
+  proj.storyText = storyEditor.innerText;
+}
+
+function saveAllToStorage(showMsg = false) {
+  try {
+    syncCurrentToProject();
+    localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+    if (activeProjectId) {
+      localStorage.setItem(STORAGE_KEY_ACTIVE, activeProjectId);
+    }
+    if (showMsg) setStatus('Сохранено в браузере');
+  } catch (e) {
+    if (showMsg) setStatus('Ошибка сохранения');
+  }
+}
+
+function loadProjectIntoEditor(id) {
+  const proj = getProject(id);
+  if (!proj) return;
+
+  activeProjectId = proj.id;
+  localStorage.setItem(STORAGE_KEY_ACTIVE, activeProjectId);
+
+  nodes = (proj.nodes || []).map(n => ({ ...n }));
+  edges = (proj.edges || []).map(e => ({ ...e }));
+  selectedId = null;
+  descSelectedId = null;
+
+  storyEditor.innerText = proj.storyText || '';
+  clearSelection();
+
+  selectNode(null);
+  renderTree();
+  renderDescSidebar();
+  descHeader.style.display = 'none';
+  descBody.style.display = 'none';
+  descEmpty.style.display = 'flex';
+  renderProjectsStrip();
+}
+
+function renderProjectsStrip() {
+  [...projectsStrip.querySelectorAll('.project-tab')].forEach(el => el.remove());
+
+  projects.forEach(p => {
+    const tab = document.createElement('div');
+    tab.className = 'project-tab' + (p.id === activeProjectId ? ' active' : '');
+    tab.title = p.name;
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = '📁 ' + (p.name || 'Без названия');
+
+    const actions = document.createElement('span');
+    actions.className = 'pt-actions';
+
+    const renameBtn = document.createElement('button');
+    renameBtn.type = 'button';
+    renameBtn.className = 'pt-btn';
+    renameBtn.title = 'Переименовать сюжет';
+    renameBtn.textContent = '✎';
+    renameBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const nextName = prompt('Новое название сюжета:', p.name);
+      if (nextName !== null) {
+        p.name = nextName.trim() || 'Без названия';
+        saveAllToStorage();
+        renderProjectsStrip();
+      }
+    });
+
+    actions.appendChild(renameBtn);
+
+    if (projects.length > 1) {
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'pt-btn del';
+      delBtn.title = 'Удалить сюжет';
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!confirm(`Удалить сюжет «${p.name}» вместе с его деревом и текстом?`)) return;
+        const idx = projects.findIndex(item => item.id === p.id);
+        projects.splice(idx, 1);
+        if (activeProjectId === p.id) {
+          const fallback = projects[Math.max(0, idx - 1)] || projects[0];
+          saveAllToStorage();
+          loadProjectIntoEditor(fallback.id);
+        } else {
+          saveAllToStorage();
+          renderProjectsStrip();
+        }
+      });
+      actions.appendChild(delBtn);
+    }
+
+    tab.appendChild(nameSpan);
+    tab.appendChild(actions);
+
+    tab.addEventListener('click', () => {
+      if (p.id === activeProjectId) return;
+      saveAllToStorage();
+      loadProjectIntoEditor(p.id);
+    });
+
+    projectsStrip.insertBefore(tab, projectsSpacer);
+  });
+}
+
+btnNewProject.addEventListener('click', () => {
+  saveAllToStorage();
+  const count = projects.length + 1;
+  const nameInput = prompt('Название нового сюжета:', `Сюжет ${count}`);
+  if (nameInput === null) return;
+  const name = nameInput.trim() || `Сюжет ${count}`;
+  const def = createDefaultNodes();
+  const newProj = {
+    id: pid(),
+    name,
+    nodes: def.nodes,
+    edges: def.edges,
+    storyText: ''
+  };
+  projects.push(newProj);
+  loadProjectIntoEditor(newProj.id);
+  saveAllToStorage(false);
+  setStatus(`Создан «${name}»`);
+});
+
+/* ============================================================
+   ЭКСПОРТ И ИМПОРТ ВСЕХ СЮЖЕТОВ ОДНИМ ФАЙЛОМ
+============================================================ */
+function cloneProjectWithFreshIds(rawProj, fallbackIdx = 1) {
+  const idMap = new Map();
+  const rawNodes = Array.isArray(rawProj.nodes) ? rawProj.nodes : [];
+  const clonedNodes = rawNodes.map(n => {
+    const newId = uid();
+    if (n && n.id) idMap.set(n.id, newId);
+    return {
+      id: newId,
+      title: String(n?.title ?? 'Без названия'),
+      type: ['event', 'choice', 'branch'].includes(n?.type) ? n.type : 'event',
+      desc: String(n?.desc ?? ''),
+      x: Number.isFinite(Number(n?.x)) ? Number(n.x) : 80,
+      y: Number.isFinite(Number(n?.y)) ? Number(n.y) : 120
+    };
+  });
+
+  const rawEdges = Array.isArray(rawProj.edges) ? rawProj.edges : [];
+  const clonedEdges = rawEdges
+    .map(e => ({
+      from: idMap.get(e?.from) || e?.from,
+      to: idMap.get(e?.to) || e?.to
+    }))
+    .filter(e => clonedNodes.some(n => n.id === e.from) && clonedNodes.some(n => n.id === e.to));
+
+  return {
+    id: pid(),
+    name: String(rawProj.name || rawProj.projectName || `Импортированный сюжет ${fallbackIdx}`).trim() || `Импортированный сюжет ${fallbackIdx}`,
+    nodes: clonedNodes,
+    edges: clonedEdges,
+    storyText: String(rawProj.storyText ?? '')
+  };
+}
+
+btnExportAll.addEventListener('click', () => {
+  saveAllToStorage();
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const payload = {
+    format: 'plotTree-bundle-v1',
+    exportedAt: new Date().toISOString(),
+    activeProjectId,
+    projects
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `all-stories-${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus(`Экспортировано сюжетов: ${projects.length}`);
+});
+
+btnImportAll.addEventListener('click', () => {
+  importFileInput.value = '';
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', async e => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+
+    let incomingRaw = [];
+    if (Array.isArray(parsed?.projects)) {
+      incomingRaw = parsed.projects;
+    } else if (Array.isArray(parsed)) {
+      incomingRaw = parsed;
+    } else if (parsed && (Array.isArray(parsed.nodes) || typeof parsed.storyText === 'string')) {
+      incomingRaw = [parsed];
+    }
+
+    if (incomingRaw.length === 0) {
+      setStatus('В файле не найдено сюжетов');
+      return;
+    }
+
+    saveAllToStorage();
+    const importedList = incomingRaw.map((item, idx) => cloneProjectWithFreshIds(item, idx + 1));
+
+    const replaceMode = confirm(
+      `Найдено сюжетов: ${importedList.length}.\n\n` +
+      `«ОК» — добавить их к текущим сюжетам.\n` +
+      `«Отмена» — заменить текущие сюжеты импортированными.`
+    );
+
+    if (replaceMode) {
+      projects = [...projects, ...importedList];
+    } else {
+      projects = importedList;
+    }
+
+    const firstImported = importedList[0];
+    loadProjectIntoEditor(firstImported.id);
+    saveAllToStorage(false);
+    setStatus(`Импортировано сюжетов: ${importedList.length}`);
+  } catch (err) {
+    setStatus('Ошибка чтения JSON-файла');
+  }
+});
+
+/* ============================================================
+   ОБРЕЗКА ДО 20 СИМВОЛОВ ПО ГРАНИЦЕ СЛОВА
+============================================================ */
 const DESC_MAX = 20;
 function truncateByWord(text) {
   const s = String(text || '').replace(/\s+/g, ' ').trim();
@@ -995,6 +1370,9 @@ function truncateByWord(text) {
   return result + '…';
 }
 
+/* ============================================================
+   ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК РЕДАКТОРА
+============================================================ */
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1009,6 +1387,9 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
+/* ============================================================
+   СВОРАЧИВАНИЕ / РАЗВОРАЧИВАНИЕ ПРАВОЙ ПАНЕЛИ ПО СТРЕЛОЧКЕ
+============================================================ */
 let panelCollapsed = false;
 
 panelToggle.addEventListener('pointerdown', e => {
@@ -1024,6 +1405,9 @@ panelToggle.addEventListener('click', e => {
   setTimeout(renderEdges, 250);
 });
 
+/* ============================================================
+   МАСШТАБ И ПАНОРАМА ПОЛЯ С УЗЛАМИ
+============================================================ */
 let view = { scale: 1, x: 0, y: 0 };
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 3;
@@ -1543,32 +1927,25 @@ document.getElementById('btn-save').addEventListener('click', () => {
   saveAllToStorage(true);
 });
 document.getElementById('btn-load').addEventListener('click', () => {
-  const raw = localStorage.getItem(STORAGE_KEY_TREE) || localStorage.getItem('plotTree');
-  if (!raw) { setStatus('Нет сохранённых данных'); return; }
-  try {
-    const data = JSON.parse(raw);
-    nodes = data.nodes || [];
-    edges = data.edges || [];
-    selectedId = null;
-    descSelectedId = null;
-    renderTree();
-    selectNode(null);
-    renderDescSidebar();
-    descHeader.style.display = 'none';
-    descBody.style.display = 'none';
-    descEmpty.style.display = 'flex';
-    setStatus('Загружено');
-  } catch (e) { setStatus('Ошибка загрузки'); }
+  saveAllToStorage(false);
+  loadProjectIntoEditor(activeProjectId);
+  setStatus('Данные текущего сюжета синхронизированы');
 });
 document.getElementById('btn-clear').addEventListener('click', () => {
-  if (!confirm('Удалить ВСЕ узлы и связи?')) return;
-  nodes = []; edges = []; selectedId = null; descSelectedId = null;
-  renderTree(); selectNode(null); renderDescSidebar();
+  if (!confirm('Очистить все узлы, связи и текст в текущем сюжете?')) return;
+  nodes = [];
+  edges = [];
+  selectedId = null;
+  descSelectedId = null;
+  storyEditor.innerText = '';
+  renderTree();
+  selectNode(null);
+  renderDescSidebar();
   descHeader.style.display = 'none';
   descBody.style.display = 'none';
   descEmpty.style.display = 'flex';
   saveAllToStorage();
-  setStatus('Очищено');
+  setStatus('Текущий сюжет очищен');
 });
 
 function renderDescSidebar() {
@@ -1653,13 +2030,8 @@ descFullText.addEventListener('input', () => {
   saveAllToStorage();
 });
 
-(function restoreStoryText() {
-  const saved = localStorage.getItem(STORAGE_KEY_STORY) ?? localStorage.getItem('storyText');
-  if (saved) storyEditor.innerText = saved;
-})();
-
 storyEditor.addEventListener('input', () => {
-  localStorage.setItem(STORAGE_KEY_STORY, storyEditor.innerText);
+  saveAllToStorage();
 });
 
 function captureSelection() {
@@ -1833,15 +2205,19 @@ document.getElementById('ltn-ok').addEventListener('click', () => {
 });
 
 document.getElementById('story-export').addEventListener('click', () => {
+  syncCurrentToProject();
+  const cur = getProject(activeProjectId);
   const data = JSON.stringify({
-    nodes, edges,
+    projectName: cur ? cur.name : 'Сюжет',
+    nodes,
+    edges,
     storyText: storyEditor.innerText
   }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'plot-tree.json';
+  a.download = `${(cur && cur.name ? cur.name : 'plot-tree').replace(/[^\wа-яА-ЯёЁ-]+/g, '_')}.json`;
   a.click();
   URL.revokeObjectURL(url);
   setStatus('Экспортировано');
@@ -1849,36 +2225,67 @@ document.getElementById('story-export').addEventListener('click', () => {
 
 window.addEventListener('resize', renderEdges);
 
+/* ============================================================
+   ИНИЦИАЛИЗАЦИЯ И ПЕРЕНОС СТАРЫХ СОХРАНЕНИЙ
+============================================================ */
 (function init() {
-  const raw = localStorage.getItem(STORAGE_KEY_TREE) ?? localStorage.getItem('plotTree');
-  if (raw) {
+  const rawProjects = localStorage.getItem(STORAGE_KEY_PROJECTS);
+  if (rawProjects) {
     try {
-      const d = JSON.parse(raw);
-      nodes = d.nodes || [];
-      edges = d.edges || [];
+      const parsed = JSON.parse(rawProjects);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        projects = parsed;
+      }
     } catch (e) {}
   }
-  if (nodes.length === 0) {
-    const startId = uid();
-    nodes.push({
-      id: startId, title: 'Начало истории', type: 'event',
-      desc: 'Герой просыпается в незнакомом месте.', x: 80, y: 200
-    });
-    const c1 = uid();
-    nodes.push({
-      id: c1, title: 'Пойти налево', type: 'choice',
-      desc: 'Выбор пути.', x: 380, y: 80
-    });
-    const c2 = uid();
-    nodes.push({
-      id: c2, title: 'Пойти направо', type: 'choice',
-      desc: 'Выбор пути.', x: 380, y: 320
-    });
-    edges.push({ from: startId, to: c1 }, { from: startId, to: c2 });
-    saveAllToStorage();
+
+  if (projects.length === 0) {
+    let migratedNodes = [];
+    let migratedEdges = [];
+    let migratedStory = '';
+
+    for (const k of LEGACY_TREE_KEYS) {
+      const rawTree = localStorage.getItem(k);
+      if (rawTree) {
+        try {
+          const d = JSON.parse(rawTree);
+          if (Array.isArray(d.nodes) && d.nodes.length > 0) {
+            migratedNodes = d.nodes;
+            migratedEdges = Array.isArray(d.edges) ? d.edges : [];
+            break;
+          }
+        } catch (e) {}
+      }
+    }
+
+    for (const sk of LEGACY_STORY_KEYS) {
+      const s = localStorage.getItem(sk);
+      if (s && s.trim()) {
+        migratedStory = s;
+        break;
+      }
+    }
+
+    if (migratedNodes.length === 0 && !migratedStory) {
+      const def = createDefaultNodes();
+      migratedNodes = def.nodes;
+      migratedEdges = def.edges;
+    }
+
+    projects = [{
+      id: pid(),
+      name: 'Основной сюжет',
+      nodes: migratedNodes,
+      edges: migratedEdges,
+      storyText: migratedStory
+    }];
+
+    localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
   }
-  renderTree();
-  renderDescSidebar();
+
+  const savedActive = localStorage.getItem(STORAGE_KEY_ACTIVE);
+  const initialProj = getProject(savedActive) || projects[0];
+  loadProjectIntoEditor(initialProj.id);
 })();
 </script>
 </body>
